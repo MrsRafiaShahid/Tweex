@@ -1,0 +1,33 @@
+{
+  "name": "socialapp",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "npx tailwindcss -i ./css/input.css -o ./css/output.css --watch",
+    "start": "node backend/index.js",
+    "start-dev": "nodemon backend/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "body-parser": "^1.20.3",
+    "cloudinary": "^2.5.1",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.10.0",
+    "multer": "^1.4.5-lts.1",
+    "nodemon": "^3.1.9",
+    "react-hot-toast": "^2.5.2"
+  },
+  "description": ""
+}
