@@ -152,7 +152,8 @@ export const likeUnlikePost = async (req, res, next) => {
       //unlike Post
       await Post.updateOne({ _id: postId }, { $pull: { likes: userId } });
       await User.updateOne({ _id: userId }, { $pull: { likedPosts: postId } });
-      res.status(200).json({ message: "Post unliked successfully" });
+     const updatedLikes = post.likes.filter((id) => id.toString() !== userId.toString());
+      res.status(200).json(updatedLikes);
     } else {
       //like Post
       post.likes.push(userId);
@@ -165,7 +166,8 @@ export const likeUnlikePost = async (req, res, next) => {
         createdAt: new Date(),
       });
       await notification.save();
-      res.status(200).json({ message: "Post liked successfully", post });
+      const updatedLikes = post.likes
+      res.status(200).json(updatedLikes);
     }
   } catch (error) {
     next(error);
@@ -173,25 +175,25 @@ export const likeUnlikePost = async (req, res, next) => {
 };
 
 //likesPosts
-export const likePosts = async (req, res, next) => {
-  const userId = req.params.id;
-  try {
-    const user = await User.findById(userId);
-    if (!user) throw new CustomError("User not found", 404);
-    const likePost = await Post.find({ _id: { $in: user.likedPosts } })
-      .populate({
-        path: "user",
-        select: "-password",
-      })
-      .populate({
-        path: "comments.user",
-        select: "-password",
-      });
-    res.status(200).json(likePost);
-  } catch (error) {
-    next(error);
-  }
-};
+// export const likePosts = async (req, res, next) => {
+//   const userId = req.params.id;
+//   try {
+//     const user = await User.findById(userId);
+//     if (!user) throw new CustomError("User not found", 404);
+//     const likePost = await Post.find({ _id: { $in: user.likedPosts } })
+//       .populate({
+//         path: "user",
+//         select: "-password",
+//       })
+//       .populate({
+//         path: "comments.user",
+//         select: "-password",
+//       });
+//     res.status(200).json(likePost);
+//   } catch (error) {
+//     next(error);
+//   }
+// };
 
 //follow post
 export const getFollowPost = async (req, res, next) => {
