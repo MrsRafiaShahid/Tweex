@@ -2,9 +2,8 @@ import { CustomError } from "../middleware/error.js";
 import { v2 as cloudinary } from "cloudinary";
 //models
 import Post from "../models/Post.js";
-import User from "../models/User.js"; 
+import User from "../models/User.js";
 import Notification from "../models/Notification.js";
-
 
 export const createPost = async (req, res, next) => {
   try {
@@ -16,7 +15,7 @@ export const createPost = async (req, res, next) => {
     if (!caption && !image)
       throw new CustomError("Caption  or image is required", 400);
     if (image) {
-      const uploadedImage = await cloudinary.uploader.upload(image);
+      const uploadedImage = await cloudinary.uploader.upload(image); // No error handling
       image = uploadedImage.secure_url;
     }
 
@@ -29,31 +28,7 @@ export const createPost = async (req, res, next) => {
     next(error);
   }
 };
-
-// const generatedFileURL = (filename) => process.env.APP_URL+`/uploads/${filename}`;
-// export const createPost = async (req, res, next) => {
-//   try {
-//     const { caption } = req.body;
-//     const files = req.files || [];
-//     const userID = req.user._id.toString();
-//     const user = await User.findById(userID);
-//     if (!user) throw new CustomError("User not found", 404);
-//     if (!caption && files.length === 0)
-//       throw new CustomError("Caption or image is required", 400);
-//     let imageUrl = files.map(file => generatedFileURL(file.filename));
-
-//     const newPost = new Post({ caption, user: userID, image: imageUrl });
-//     await newPost.save();
-//     user.posts.push(newPost._id);
-//     await user.save(); // Save the user to the database
-//     res.status(201).json({ message: "Post created successfully", newPost });
-//   } catch (error) {
-//     next(error);
-//   }
-// };
-
 //delete post
-
 export const deletePost = async (req, res, next) => {
   try {
     const postID = req.params.id;
@@ -71,7 +46,6 @@ export const deletePost = async (req, res, next) => {
     next(error);
   }
 };
-
 //update Post
 export const updatePost = async (req, res, next) => {
   const { id } = req.params;
@@ -100,7 +74,6 @@ export const updatePost = async (req, res, next) => {
     next(error);
   }
 };
-
 //get post
 export const getPost = async (req, res, next) => {
   try {
@@ -134,7 +107,7 @@ export const commentPost = async (req, res, next) => {
     res.status(200).json({
       message: "Comment created successfully",
       comment: newComment,
-      post
+      post,
     });
   } catch (error) {
     next(error);
@@ -152,7 +125,14 @@ export const likeUnlikePost = async (req, res, next) => {
       //unlike Post
       await Post.updateOne({ _id: postId }, { $pull: { likes: userId } });
       await User.updateOne({ _id: userId }, { $pull: { likedPosts: postId } });
-     const updatedLikes = post.likes.filter((id) => id.toString() !== userId.toString());
+      await Notification.deleteOne({
+        from: userId,
+        to: post.user,
+        type: "like",
+      });
+      const updatedLikes = post.likes.filter(
+        (id) => id.toString() !== userId.toString()
+      );
       res.status(200).json(updatedLikes);
     } else {
       //like Post
@@ -166,35 +146,13 @@ export const likeUnlikePost = async (req, res, next) => {
         createdAt: new Date(),
       });
       await notification.save();
-      const updatedLikes = post.likes
+      const updatedLikes = post.likes;
       res.status(200).json(updatedLikes);
     }
   } catch (error) {
     next(error);
   }
 };
-
-//likesPosts
-// export const likePosts = async (req, res, next) => {
-//   const userId = req.params.id;
-//   try {
-//     const user = await User.findById(userId);
-//     if (!user) throw new CustomError("User not found", 404);
-//     const likePost = await Post.find({ _id: { $in: user.likedPosts } })
-//       .populate({
-//         path: "user",
-//         select: "-password",
-//       })
-//       .populate({
-//         path: "comments.user",
-//         select: "-password",
-//       });
-//     res.status(200).json(likePost);
-//   } catch (error) {
-//     next(error);
-//   }
-// };
-
 //follow post
 export const getFollowPost = async (req, res, next) => {
   try {
@@ -218,9 +176,7 @@ export const getFollowPost = async (req, res, next) => {
     next(error);
   }
 };
-
 // user post
-
 export const getUserPost = async (req, res, next) => {
   const { username } = req.params;
   try {
@@ -229,11 +185,9 @@ export const getUserPost = async (req, res, next) => {
     const posts = await Post.find({ user: user._id })
       .sort({ createdAt: -1 })
       .populate({ path: "user", select: "-password" })
-      .populate({ path: "comments.user", select: "-password" }); 
+      .populate({ path: "comments.user", select: "-password" });
     res.status(200).json(posts);
   } catch (error) {
     next(error);
   }
 };
-
-

@@ -90,7 +90,7 @@ const Notification = () => {
                   <div className="w-8 rounded-full">
                     <img
                       src={
-                        notification.from.profileImg ||
+                        notification.from.profilePicture ||
                         "/avatar-placeholder.png"
                       }
                     />

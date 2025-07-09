@@ -10,8 +10,7 @@ import notificationRoute from "./routes/notification.js";
 
 import cors from "cors";
 import dotenv from "dotenv";
-
-// import { fileUpload } from "./middleware/fileUpload.js"; // Ensure this path is correct and the file exists
+// Middleware for parsing cookies
 import cookieParser from "cookie-parser"; 
 import { errorHandler } from "./middleware/error.js";
 import { v2 as cloudinary } from "cloudinary";
@@ -24,6 +23,14 @@ cloudinary.config({
 });
 
 const app = express();
+app.use(cookieParser());
+// Enable CORS for all routes
+const corsOptions = {
+  origin: "http://localhost:3000", // Your frontend URL
+  credentials: true, // THIS IS CRUCIAL
+};
+app.use(cors(corsOptions));
+
 // Middleware to parse JSON bodies
 app.use(express.json({limit:"5mb"}));
 app.use(express.urlencoded({ extended: true }));

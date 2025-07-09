@@ -14,16 +14,12 @@ import {
 } from "../controllers/post.controller.js";
 const router = express.Router();
 
-// const upload = multer({ dest: 'uploads/' });
-
 //get post
 router.get("/all", protectRoute, getPost);
 //create post
 router.post("/create", protectRoute, createPost);
-
-//gwt follow post
+//get follow post
 router.get("/following", protectRoute, getFollowPost);
-
 //get user post
 router.get("/user/:username", protectRoute, getUserPost);
 //delete post
@@ -31,9 +27,7 @@ router.delete("/:id", protectRoute, deletePost);
 //update Post
 router.put("/update/:id", protectRoute, updatePost);
 //like/Unlike post
-router.post("/like/:id", protectRoute, likeUnlikePost);
-//get likes post
-// router.get("/likes/:id", protectRoute, likePosts);
+router.post("/likes/:id", protectRoute, likeUnlikePost);
 //comments on post
 router.post("/comment/:postId", protectRoute, commentPost);
 export default router;

@@ -6,7 +6,6 @@ import Sidebar from "./common/SideBar.jsx";
 import RightPanel from "./common/RightPanel.jsx";
 import Notification from "../Pages/notification/Notification.jsx";
 import Profile from "../Pages/Profile/Profile.jsx";
-
 import { Toaster } from "react-hot-toast";
 import { useQuery } from "@tanstack/react-query";
 import LoadingSpinner from "./common/LoadingSpinner.jsx";
@@ -16,23 +15,32 @@ const Routing = () => {
     queryKey: ["authUser"],
     queryFn: async () => {
       try {
-        const res = await fetch("api/auth/me");
+        const res = await fetch("/api/auth/me", {
+          method: "GET",
+          credentials: "include", // Include cookies in the request
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
         const data = await res.json();
+        if (data.error) return null; // If there's an error, return null
+        // If the response is not ok or there's an error in data, throw an error
         if (!res.ok || data.error)
           throw new Error(data.error || "Something went wrong");
         console.log("autheUser is here", data);
         return data;
       } catch (error) {
-        console.log(error);
         throw new Error(error);
       }
     },
     retry: false,
   });
   if (isLoading) {
-    <div className="h-screen flex justify-center itemse-center">
-      <LoadingSpinner size="lg" />
-    </div>;
+    return (
+      <div className="h-screen flex justify-center items-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
   }
   return (
     <>

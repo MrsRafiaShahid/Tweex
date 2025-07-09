@@ -17,33 +17,34 @@ const SignUpPage = () => {
     fullName: "",
     password: "",
   });
-  const {mutate, isError, isPending, error} = useMutation({
+  const { mutate, isError, isPending, error } = useMutation({
     mutationFn: async ({ email, fullName, username, password }) => {
       try {
-        const res = await fetch("api/auth/signup", {
+        const res = await fetch("/api/auth/signup", {
           method: "POST",
+          credentials: "include", // Include cookies in the request
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ email, fullName, username, password }),
         });
-        const data = res.json();
+        const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed to create account");
         console.log(data);
         return data;
       } catch (error) {
-        console.log(error)
-        throw error;
+        console.log(error);
+        throw new Error(error);
       }
     },
-    onSuccess:()=>{
-      toast.success("Account created successfully")
-    }
+    onSuccess: () => {
+      toast.success("Account created successfully");
+    },
   });
 
   const handleSubmit = (e) => {
     e.preventDefault(); //page wont reload
-    mutate(formData)
+    mutate(formData);
   };
 
   const handleInputChange = (e) => {

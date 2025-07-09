@@ -33,6 +33,11 @@ const userSchema = new mongoose.Schema(
       maxlength: 500,
       trim: true,
     },
+    link: {
+      type: String,
+      default: "",
+      trim: true,
+    },
     profilePicture: {
       type: String,
       default: "",
@@ -59,12 +64,6 @@ const userSchema = new mongoose.Schema(
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
         default:[],
-      },
-    ],
-    blockList: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
       },
     ],
     likedPosts:[

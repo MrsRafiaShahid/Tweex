@@ -2,13 +2,13 @@ import { CiImageOn } from "react-icons/ci";
 import { BsEmojiSmileFill } from "react-icons/bs";
 import { useRef, useState } from "react";
 import { IoCloseSharp } from "react-icons/io5";
-import { QueryClient, useMutation, useQuery } from "@tanstack/react-query";
+import {useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
 const CreatePost = () => {
   const [text, setText] = useState("");
   const [img, setImg] = useState(null);
-  const queryClient = QueryClient();
+  const queryClient = useQueryClient();
   const { data: authUser } = useQuery({ queryKey: ["authUser"] });
 
   const imgRef = useRef(null);
@@ -19,14 +19,14 @@ const CreatePost = () => {
     isError,
     error,
   } = useMutation({
-    mutation: async ({ text, img }) => {
+    mutation: async ({ caption, image }) => {
       try {
         const res = await fetch("/api/posts/create", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ text, img }),
+          body: JSON.stringify({ caption, image }),
         });
         const data = await res.json();
         if (!res.ok) {

@@ -1,45 +1,46 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-
 import XSvg from "../../../Component/svg/logo.jsx";
-
 import { MdOutlineMail } from "react-icons/md";
 import { MdPassword } from "react-icons/md";
-import { QueryClient, useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
-const LoginPage = () => {
-  const queryClient = new QueryClient()
+const Login = () => {
   const [formData, setFormData] = useState({
-    usernameOrEmail: "",
+    username: "",
     password: "",
   });
-  const { mutate: loginMutation, isError, isPending, error } = useMutation({
-    mutationFn: async ({ usernameOrEmail, password }) => {
+  const queryClient = useQueryClient();
+  const {
+    mutate: loginMutation,
+    isError,
+    isPending,
+    error,
+  } = useMutation({
+    mutationFn: async ({ username, password }) => {
       try {
-        const res = await fetch("api/auth/signup", {
+        const res = await fetch("/api/auth/login", {
           method: "POST",
+          credentials: "include", // Include cookies in the request
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ usernameOrEmail, password }),
+          body: JSON.stringify({ username, password }),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed to create account");
-        console.log(data);
+        if (!res.ok) throw new Error(data.error || "Something went wrong");
         return data;
       } catch (error) {
         console.log(error);
-        throw error;
+        throw new Error(error.message || "Something went wrong");
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
-
-        queryKey:["authUser"]
-      })
+        queryKey: ["authUser"],
+      });
       toast.success("Login successfully");
-
     },
   });
   const handleSubmit = (e) => {
@@ -66,9 +67,9 @@ const LoginPage = () => {
               type="text"
               className="grow"
               placeholder="Username or Email"
-              name="usernameOrEmail"
+              name="username"
               onChange={handleInputChange}
-              value={formData.usernameOrEmail}
+              value={formData.username}
             />
           </label>
 
@@ -76,6 +77,7 @@ const LoginPage = () => {
             <MdPassword />
             <input
               type="password"
+              autoComplete="current-password"
               className="grow"
               placeholder="Password"
               name="password"
@@ -100,4 +102,4 @@ const LoginPage = () => {
     </div>
   );
 };
-export default LoginPage;
+export default Login;

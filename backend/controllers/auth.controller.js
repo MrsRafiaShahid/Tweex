@@ -1,6 +1,5 @@
 import User from "../models/User.js";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import { CustomError } from "../middleware/error.js";
 import generateTokenAndSetCookie from "../lib/utils/generateToken.js";
 
@@ -34,9 +33,6 @@ const register = async (req, res, next) => {
         "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number",
         400
       );
-      if (password.length < 8) {
-        throw new CustomError("Password must be at least 8 characters long", 400);
-      }
     }
     //hash password
     const salt = await bcrypt.genSalt(10);
@@ -68,10 +64,14 @@ const login = async (req, res, next) => {
     // Find user by email or username
     const { email, username, password } = req.body;
     const user = await User.findOne({ $or: [{ email }, { username }] });
-
-    const isMatch = await bcrypt.compare(password, user?.password || "");
-    if (!user || !isMatch) {
-      throw new CustomError("User not found or Invalid crendiatials", 404);
+    
+    if (!user) {
+      throw new CustomError("User not found or Invalid credentials", 404);
+    }
+    
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      throw new CustomError("Invalid credentials", 404);
     }
     // Generate token
     generateTokenAndSetCookie(user._id, res);
@@ -89,7 +89,7 @@ const logout = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-}; 
+};
 
 const refetch = async (req, res, next) => {
   try {

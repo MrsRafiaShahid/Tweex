@@ -5,8 +5,6 @@ import { CustomError } from "../middleware/error.js";
 //models
 import User from "../models/User.js";
 import Post from "../models/Post.js";
-import Comment from "../models/Comments.js";
-import Story from "../models/Story.js";
 import Notification from "../models/Notification.js";
 
 //profile
@@ -18,30 +16,11 @@ const getUserProfile = async (req, res, next) => {
       .populate("following", "username fullName profilePicture")
       .select("-password");
     if (!user) throw new CustomError("User not found", 404);
-
     const posts = await Post.find({ user: user._id }).sort({ createdAt: -1 });
-    const stories = await Story.find({ user: user._id }).sort({
-      createdAt: -1,
-    });
     const comments = await Comment.find({ user: user._id }).sort({
       createdAt: -1,
     });
     res.status(200).json({ user, posts, stories, comments });
-  } catch (error) {
-    next(error);
-  }
-};
-
-//get user
-const getUser = async (req, res, next) => {
-  const { userID } = req.params;
-  try {
-    const user = await User.findById(userID);
-    if (!user) {
-      throw new CustomError("User not found", 404);
-    }
-    const { password, ...data } = user._doc;
-    res.status(200).json(data);
   } catch (error) {
     next(error);
   }
@@ -173,147 +152,7 @@ const followUnfollowUser = async (req, res, next) => {
     next(error);
   }
 };
-//Block/unblock the user
-const blockUnblockUser = async (req, res, next) => {
-  try {
-    const { userID } = req.params;
-    const blockUser = await User.findById(userID);
-    const currentUser = await User.findById(req.user._id);
-    if (userID === req.user._id.toString())
-      throw new CustomError("You cannot block/unblock yourself", 400);
-    if (!blockUser || !currentUser)
-      throw new CustomError("User not found", 404);
-    const isBlocked = currentUser.blockList.includes(userID);
-
-    if (isBlocked) {
-      // unblock user
-      await User.findByIdAndUpdate(
-        req.user._id,
-        { $pull: { blockList: userID } },
-        { new: true }
-      );
-      await User.findByIdAndUpdate(
-        userID,
-        { $pull: { followers: req.user._id } },
-        { new: true }
-      );
-    } else {
-      // block user
-      currentUser.blockList.push(userID);
-      blockUser.followers = blockUser.followers.filter(
-        (follow) => follow.toString() !== req.user._id
-      );
-      blockUser.following = blockUser.following.filter(
-        (follow) => follow.toString() !== req.user._id
-      );
-    }
-    await currentUser.save();
-    await blockUser.save();
-    res.status(200).json({
-      message: isBlocked
-        ? "User unblocked successfully"
-        : "User blocked successfully",
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-//get blockList
-const blockList = async (req, res, next) => {
-  const { userID } = req.params;
-  try {
-    const user = await User.findById(userID)
-      .populate("blockList", "username fullName profilePicture")
-      .select("blockList");
-    if (!user) {
-      throw new CustomError("User not found", 404);
-    }
-    const { blockList, ...data } = user;
-
-    res.status(200).json(blockList);
-  } catch (error) {
-    next(error);
-  }
-};
-
-//delete user
-const deleteUser = async (req, res, next) => {
-  const { userID } = req.params;
-  try {
-    const user = await User.findByIdAndDelete(userID);
-    if (!user) {
-      throw new CustomError("User not found", 404);
-    }
-    await Post.deleteMany({ user: userID });
-    await Post.deleteMany({ "comments.user": userID });
-    await Post.deleteMany({ "comments.replies.user": userID });
-    await Comment.deleteMany({ user: userID });
-    // await Reply.deleteMany({ user: userID });
-    await User.updateMany(
-      { _id: { $in: user.following } },
-      { $pull: { followers: userID } }
-    );
-    await User.updateMany(
-      { _id: { $in: user.followers } },
-      { $pull: { following: userID } }
-    );
-    await Comment.updateMany(
-      { "replies.user": userID },
-      { $pull: { "replies.user": userID } }
-    );
-    await Comment.updateMany(
-      { "likes.user": userID },
-      { $pull: { likes: { user: userID } } }
-    );
-    await Comment.updateMany(
-      { "replies.likes": userID },
-      { $pull: { "replies.likes": { user: userID } } }
-    );
-    await Post.updateMany({}, { $pull: { likes: userID } });
-    await User.updateMany(
-      { "likes.user": userID },
-      { $pull: { likes: { user: userID } } }
-    );
-    await User.updateMany(
-      { "dislikes.user": userID },
-      { $pull: { dislikes: { user: userID } } }
-    );
-    const replies = await Comment.find({ "replies.user": userID });
-    await Promise.all(
-      replies.map(async (reply) => {
-        reply.replies = reply.replies.filter(
-          (reply) => reply.user.toString() != userID
-        );
-        await reply.save();
-      })
-    );
-    await user.deleteOne();
-    await Story.deleteMany({ user: userID });
-
-    res.status(200).json({ message: "User deleted successfully" });
-  } catch (error) {
-    next(error);
-  }
-};
-
-//search user
-const searchUser = async (req, res, next) => {
-  const { query } = req.params;
-  try {
-    const users = await User.find({
-      $or: [
-        { username: { $regex: new RegExp(query, "i") } },
-        { fullName: { $regex: new RegExp(query, "i") } },
-      ],
-    }).select("username fullName profilePicture");
-    res.status(200).json(users);
-  } catch (error) {
-    next(error);
-  }
-};
 //suggested user
-
 const suggestedUsers = async (req, res, next) => {
   try {
     const userID = req.user._id;
@@ -338,17 +177,10 @@ const suggestedUsers = async (req, res, next) => {
     next(error);
   }
 };
-
-
 // Export the controller functions
 export {
   getUserProfile,
   suggestedUsers,
-  getUser,
   updateUser,
   followUnfollowUser,
-  blockUnblockUser,
-  blockList,
-  deleteUser,
-  searchUser,
 };
