@@ -7,34 +7,11 @@ import RightPanel from "./common/RightPanel.jsx";
 import Notification from "../Pages/notification/Notification.jsx";
 import Profile from "../Pages/Profile/Profile.jsx";
 import { Toaster } from "react-hot-toast";
-import { useQuery } from "@tanstack/react-query";
 import LoadingSpinner from "./common/LoadingSpinner.jsx";
+import useAuthUser from "../hooks/useAuthUser.js";
 
 const Routing = () => {
-  const { data: authUser, isLoading } = useQuery({
-    queryKey: ["authUser"],
-    queryFn: async () => {
-      try {
-        const res = await fetch("/api/auth/me", {
-          method: "GET",
-          credentials: "include", // Include cookies in the request
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-        const data = await res.json();
-        if (data.error) return null; // If there's an error, return null
-        // If the response is not ok or there's an error in data, throw an error
-        if (!res.ok || data.error)
-          throw new Error(data.error || "Something went wrong");
-        console.log("autheUser is here", data);
-        return data;
-      } catch (error) {
-        throw new Error(error);
-      }
-    },
-    retry: false,
-  });
+  const { data: authUser, isLoading } = useAuthUser();
   if (isLoading) {
     return (
       <div className="h-screen flex justify-center items-center">
@@ -48,6 +25,8 @@ const Routing = () => {
         {/* Common component, bc its not supported with Routes  */}
         {authUser && <Sidebar />}
         <Routes>
+          {/* Define routes for different pages */}
+          {/* If user is authenticated, they can access these routes, otherwise redirect to login */}
           <Route
             path="/"
             element={authUser ? <Home /> : <Navigate to="/login" />}
@@ -68,6 +47,7 @@ const Routing = () => {
             path="/profile/:username"
             element={authUser ? <Profile /> : <Navigate to="/login" />}
           />
+          
         </Routes>
         {authUser && <RightPanel />}
         <Toaster />

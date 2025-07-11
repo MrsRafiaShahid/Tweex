@@ -11,15 +11,8 @@ import Notification from "../models/Notification.js";
 const getUserProfile = async (req, res, next) => {
   const { username } = req.params;
   try {
-    const user = await User.findOne({ username })
-      .populate("followers", "username fullName profilePicture")
-      .populate("following", "username fullName profilePicture")
-      .select("-password");
+    const user = await User.findOne({ username });
     if (!user) throw new CustomError("User not found", 404);
-    const posts = await Post.find({ user: user._id }).sort({ createdAt: -1 });
-    const comments = await Comment.find({ user: user._id }).sort({
-      createdAt: -1,
-    });
     res.status(200).json({ user, posts, stories, comments });
   } catch (error) {
     next(error);
@@ -27,7 +20,7 @@ const getUserProfile = async (req, res, next) => {
 };
 //update user
 const updateUser = async (req, res, next) => {
-  const { fullName, email, password, newPassword, bio } = req.body;
+  const { fullName, email, currentPassword, newPassword, bio, link } = req.body;
   let { profilePicture, coverPicture } = req.body;
 
   const userID = req.user._id;
@@ -36,19 +29,16 @@ const updateUser = async (req, res, next) => {
     if (!user) {
       throw new CustomError("User not found", 404);
     }
-    if ((!newPassword && password) || (newPassword && !password)) {
+    if (
+      (!newPassword && currentPassword) ||
+      (newPassword && !currentPassword)
+    ) {
       throw new CustomError("Password mismatch", 400);
     }
-    if (newPassword && password) {
-      const isMatch = await bcrypt.compare(password, user.password);
+    if (newPassword && currentPassword) {
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
       if (!isMatch) throw new CustomError("Invalid credentials", 401);
-      const passwordRegex = /(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}/;
-      if (!passwordRegex.test(newPassword)) {
-        throw new CustomError(
-          "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number",
-          400
-        );
-      }
+
       if (newPassword.length < 8) {
         throw new CustomError("Password must be at least 8 characters", 400);
       }
@@ -78,6 +68,7 @@ const updateUser = async (req, res, next) => {
     user.fullName = fullName || user.fullName;
     user.email = email || user.email;
     user.bio = bio || user.bio;
+    user.link = link || user.link;
     user.profilePicture = profilePicture || user.profilePicture;
     user.coverPicture = coverPicture || user.coverPicture;
     user = await user.save();
@@ -90,9 +81,6 @@ const updateUser = async (req, res, next) => {
 };
 //follow user
 const followUnfollowUser = async (req, res, next) => {
-  if (!req.user) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
   try {
     const { userID } = req.params;
     let ModifyUser = await User.findById(userID);
@@ -104,45 +92,26 @@ const followUnfollowUser = async (req, res, next) => {
     }
     if (!ModifyUser || !currentUser)
       throw new CustomError("User not found", 404);
-    // Check if the user is blocked
-    if (
-      currentUser.blockList.includes(userID) ||
-      ModifyUser.blockList.includes(req.user._id)
-    ) {
-      return res.status(403).json({
-        message:
-          "You cannot follow a user you have blocked or who has blocked you",
-      });
-    }
     const isFollowing = currentUser.following.includes(userID);
 
     if (isFollowing) {
-      // unfollow user
-      ModifyUser = await User.findByIdAndUpdate(
-        userID,
-        { $pull: { followers: req.user._id } },
-        { new: true }
-      );
-      currentUser = await User.findByIdAndUpdate(
-        req.user._id,
-        { $pull: { following: userID } },
-        { new: true }
-      );
+      // Unfollow the user
+      await User.findByIdAndUpdate(id, { $pull: { followers: req.user._id } });
+      await User.findByIdAndUpdate(req.user._id, { $pull: { following: id } });
+
+      res.status(200).json({ message: "User unfollowed successfully" });
     } else {
-      // follow user
-      currentUser.following.push(userID);
-      ModifyUser.followers.push(req.user._id);
-      //send notification to the user
+      // Follow the user
+      await User.findByIdAndUpdate(id, { $push: { followers: req.user._id } });
+      await User.findByIdAndUpdate(req.user._id, { $push: { following: id } });
+      // Send notification to the user
       const newNotification = new Notification({
-        from: req.user._id,
-        to: userID,
         type: "follow",
+        from: req.user._id,
+        to: userToModify._id,
       });
       await newNotification.save();
     }
-    await currentUser.save();
-    await ModifyUser.save();
-    //TODO: return the id of the user as a response
     res.status(200).json({
       message: isFollowing
         ? "User unfollowed successfully"
@@ -178,9 +147,4 @@ const suggestedUsers = async (req, res, next) => {
   }
 };
 // Export the controller functions
-export {
-  getUserProfile,
-  suggestedUsers,
-  updateUser,
-  followUnfollowUser,
-};
+export { getUserProfile, suggestedUsers, updateUser, followUnfollowUser };

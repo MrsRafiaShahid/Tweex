@@ -13,7 +13,7 @@ const useFollow = () => {
         });
         const data = res.json();
         if (!res.ok) {
-          throw new Error(data.message || "Something went wrong");
+          throw new Error(data.error || "Something went wrong");
         }
       } catch (error) {
         throw new Error(error.message);

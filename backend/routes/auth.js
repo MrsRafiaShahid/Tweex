@@ -3,7 +3,7 @@ import {
   login,
   logout,
   refetch,
-  register,
+  signup,
 } from "../controllers/auth.controller.js";
 import { protectRoute } from "../middleware/protectRoute.js";
 
@@ -11,8 +11,11 @@ const app = express();
 const router = express.Router();
 app.use(express.json());
 
+// Fetch current user route
+router.get("/me", protectRoute, refetch);
+
 //Register routes
-router.post("/register", register);
+router.post("/signup", signup);
 
 //Logins routes
 
@@ -20,8 +23,5 @@ router.post("/login", login);
 
 //Logout routes
 router.post("/logout", logout);
-
-// Fetch current user route
-router.get("/me", protectRoute, refetch);
 
 export default router;

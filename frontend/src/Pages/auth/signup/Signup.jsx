@@ -28,12 +28,17 @@ const SignUpPage = () => {
           },
           body: JSON.stringify({ email, fullName, username, password }),
         });
+        // Check content type before parsing
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          const text = await res.text();
+          throw new Error(`Invalid response: ${text.substring(0, 100)}`);
+        }
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed to create account");
-        console.log(data);
+        // console.log(data);
         return data;
       } catch (error) {
-        console.log(error);
         throw new Error(error);
       }
     },

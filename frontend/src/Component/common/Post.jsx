@@ -16,26 +16,27 @@ const Post = ({ post }) => {
   const { data: authUser } = useQuery({ queryKey: ["authUser"] });
   const postOwner = post.user;
   const isLiked = post.likes.includes(authUser._id);
-  const { mutate: deletePost, isPending: isDeleting } = useMutation({
-    mutation: async () => {
-      try {
-        const res = await fetch(`/api/posts/${post._id}`, {
-          method: "DELETE",
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.error || "Something went wrong");
-        }
-        return data;
-      } catch (error) {
-        throw new Error(error);
-      }
-    },
-    onSuccess: () => {
-      toast.success("Post deleted successfully");
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-    },
-  });
+ const { mutate: deletePost, isPending: isDeleting } = useMutation({
+		mutationFn: async () => {
+			try {
+				const res = await fetch(`/api/posts/${post._id}`, {
+					method: "DELETE",
+				});
+				const data = await res.json();
+
+				if (!res.ok) {
+					throw new Error(data.error || "Something went wrong");
+				}
+				return data;
+			} catch (error) {
+				throw new Error(error);
+			}
+		},
+		onSuccess: () => {
+			toast.success("Post deleted successfully");
+			queryClient.invalidateQueries({ queryKey: ["posts"] });
+		},
+	});
   const { mutate: likePost, isPending: isLiking } = useMutation({
     mutation: async () => {
       try {
@@ -73,7 +74,7 @@ const Post = ({ post }) => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ text: comment }),
+          body: JSON.stringify({ caption: comment }),
         });
         const data = await res.json();
         if (!res.ok) {

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import XSvg from "../../../Component/svg/logo.jsx";
 import { MdOutlineMail } from "react-icons/md";
-import { MdPassword } from "react-icons/md";
+import { MdLock } from "react-icons/md";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
@@ -19,22 +19,23 @@ const Login = () => {
     error,
   } = useMutation({
     mutationFn: async ({ username, password }) => {
-      try {
-        const res = await fetch("/api/auth/login", {
-          method: "POST",
-          credentials: "include", // Include cookies in the request
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ username, password }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Something went wrong");
-        return data;
-      } catch (error) {
-        console.log(error);
-        throw new Error(error.message || "Something went wrong");
+      const res = await fetch('/api/auth/login', {
+        method: "POST",
+        credentials: "include", // Include cookies in the request
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      });
+      // Check content type before parsing
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await res.text();
+        throw new Error(`Invalid response: ${text.substring(0, 100)}`);
       }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Something went wrong");
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -66,7 +67,7 @@ const Login = () => {
             <input
               type="text"
               className="grow"
-              placeholder="Username or Email"
+              placeholder="Username"
               name="username"
               onChange={handleInputChange}
               value={formData.username}
@@ -74,10 +75,10 @@ const Login = () => {
           </label>
 
           <label className="input input-bordered rounded flex items-center gap-2">
-            <MdPassword />
+            <MdLock />
             <input
               type="password"
-              autoComplete="current-password"
+              // autoComplete="current-password"
               className="grow"
               placeholder="Password"
               name="password"
@@ -88,7 +89,7 @@ const Login = () => {
           <button className="btn rounded-full btn-primary text-white">
             {isPending ? "Loading..." : "Login"}
           </button>
-          {isError && <p className="text-red-500">{error.message}</p>}
+          {isError && error && <p className="text-red-500">{error.message}</p>}
         </form>
         <div className="flex flex-col gap-2 mt-4">
           <p className="text-white text-lg">{"Don't"} have an account?</p>

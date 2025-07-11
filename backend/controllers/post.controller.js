@@ -7,13 +7,14 @@ import Notification from "../models/Notification.js";
 
 export const createPost = async (req, res, next) => {
   try {
-    const { caption, image } = req.body;
-    // let { image } = req.body; // for cloudinary file upload
+    const { caption } = req.body;
+    let { image } = req.body; // for cloudinary file upload
     const userID = req.user._id.toString();
     const user = await User.findById(userID);
     if (!user) throw new CustomError("User not found", 404);
-    if (!caption && !image)
+    if (!caption && !image) {
       throw new CustomError("Caption  or image is required", 400);
+    }
     if (image) {
       const uploadedImage = await cloudinary.uploader.upload(image); // No error handling
       image = uploadedImage.secure_url;
@@ -25,6 +26,11 @@ export const createPost = async (req, res, next) => {
     await user.save(); // Save the user to the database
     res.status(201).json({ message: "Post created sucessfully", newPost });
   } catch (error) {
+    console.error("Error in createPost:", error);
+    res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
+    });
     next(error);
   }
 };
@@ -78,10 +84,16 @@ export const updatePost = async (req, res, next) => {
 export const getPost = async (req, res, next) => {
   try {
     const userId = req.user._id;
-    const posts = await Post.find({ user: userId })
+    const posts = await Post.find()
       .sort({ createdAt: -1 })
-      .populate("user", "username fullName profilePicture")
-      .populate("comments.user", "username fullName profilePicture");
+      .populate({
+        path: "user",
+        select: "-password",
+      })
+      .populate({
+        path: "comments.user",
+        select: "-password",
+      });
     if (posts.length === 0) {
       return res.status(200).json([]);
     }
@@ -153,6 +165,7 @@ export const likeUnlikePost = async (req, res, next) => {
     next(error);
   }
 };
+
 //follow post
 export const getFollowPost = async (req, res, next) => {
   try {
@@ -174,12 +187,17 @@ export const getFollowPost = async (req, res, next) => {
     res.status(200).json(followPosts);
   } catch (error) {
     next(error);
+    console.error("Error in getFollowPost:", error);
+    res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
+    });
   }
 };
 // user post
 export const getUserPost = async (req, res, next) => {
-  const { username } = req.params;
   try {
+    const { username } = req.params;
     const user = await User.findOne({ username });
     if (!user) throw new CustomError("User not found", 404);
     const posts = await Post.find({ user: user._id })

@@ -2,14 +2,15 @@ import { CiImageOn } from "react-icons/ci";
 import { BsEmojiSmileFill } from "react-icons/bs";
 import { useRef, useState } from "react";
 import { IoCloseSharp } from "react-icons/io5";
-import {useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import useAuthUser from "../../hooks/useAuthUser";
 
 const CreatePost = () => {
-  const [text, setText] = useState("");
-  const [img, setImg] = useState(null);
+  const [caption, setCaption] = useState("");
+  const [image, setImage] = useState(null);
   const queryClient = useQueryClient();
-  const { data: authUser } = useQuery({ queryKey: ["authUser"] });
+  const { data: authUser } = useAuthUser();
 
   const imgRef = useRef(null);
 
@@ -23,12 +24,18 @@ const CreatePost = () => {
       try {
         const res = await fetch("/api/posts/create", {
           method: "POST",
+          credentials: "include", // Include cookies in the request
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ caption, image }),
+          
         });
         const data = await res.json();
+        // Check if the response is ok
+        if (!data || !data.newPost) {
+          throw new Error("Failed to create post");
+        }
         if (!res.ok) {
           throw new Error(data.error || "Something went wrong");
         }
@@ -38,8 +45,8 @@ const CreatePost = () => {
       }
     },
     onSuccess: () => {
-      setText("");
-      setImg(null);
+      setCaption("");
+      setImage(null);
       toast.success("Post created successfully");
       queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
@@ -47,7 +54,7 @@ const CreatePost = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    createPost({ text, img });
+    createPost({ caption, image });
   };
 
   const handleImgChange = (e) => {
@@ -55,7 +62,7 @@ const CreatePost = () => {
     if (file) {
       const reader = new FileReader();
       reader.onload = () => {
-        setImg(reader.result);
+        setImage(reader.result);
       };
       reader.readAsDataURL(file);
     }
@@ -72,20 +79,20 @@ const CreatePost = () => {
         <textarea
           className="textarea w-full p-0 text-lg resize-none border-none focus:outline-none  border-gray-800"
           placeholder="What is happening?!"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
+          value={caption}
+          onChange={(e) => setCaption(e.target.value)}
         />
-        {img && (
+        {image && (
           <div className="relative w-72 mx-auto">
             <IoCloseSharp
               className="absolute top-0 right-0 text-white bg-gray-800 rounded-full w-5 h-5 cursor-pointer"
               onClick={() => {
-                setImg(null);
+                setImage(null);
                 imgRef.current.value = null;
               }}
             />
             <img
-              src={img}
+              src={image}
               className="w-full mx-auto h-72 object-contain rounded"
             />
           </div>
