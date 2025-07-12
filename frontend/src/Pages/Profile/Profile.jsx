@@ -15,6 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import { formatMemberSinceDate } from "../../utils/date";
 import useFollow from "../../hooks/useFollow";
 import useUpdateProfile from "../../hooks/useUpdateProfile";
+import useAuthUser from "../../hooks/useAuthUser";
 const Profile = () => {
   const [coverPicture, setcoverPicture] = useState(null);
   const [profilePicture, setProfilePicture] = useState(null);
@@ -24,7 +25,7 @@ const Profile = () => {
   const profilePictureRef = useRef(null);
   const { username } = useParams();
   const { follow, isPending } = useFollow();
-  const { data: authUser } = useQuery({ queryKey: ["authUser"] });
+  const { data: authUser } =useAuthUser();
 
   const {
     data: user,
@@ -36,7 +37,7 @@ const Profile = () => {
     queryFn: async () => {
       try {
         const res = await fetch(`/api/user/profile/${username}`);
-        const data = res.json();
+        const data =await res.json();
         if (!res.ok) {
           throw new Error(data.error || "Something went wrong");
         }
@@ -199,13 +200,13 @@ const Profile = () => {
                 <div className="flex gap-2">
                   <div className="flex gap-1 items-center">
                     <span className="font-bold text-xs">
-                      {user?.following.length}
+                      {user.following?.length}
                     </span>
                     <span className="text-slate-500 text-xs">Following</span>
                   </div>
                   <div className="flex gap-1 items-center">
                     <span className="font-bold text-xs">
-                      {user?.followers.length}
+                      {user.followers?.length}
                     </span>
                     <span className="text-slate-500 text-xs">Followers</span>
                   </div>

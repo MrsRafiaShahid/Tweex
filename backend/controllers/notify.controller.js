@@ -15,7 +15,10 @@ export const getNotification = async (req, res, next) => {
       .sort({ createdAt: -1 });
 
     // Mark all notifications as read
-    await Notification.updateMany({ to: userId }, { read: true });
+    await Notification.updateMany(
+      { to: userId, read: false },
+      { $set: { read: true } }
+    );
     res.status(200).json(notifications);
   } catch (error) {
     next(error);
@@ -31,20 +34,3 @@ export const deleteNotification = async (req, res, next) => {
     next(error);
   }
 };
-
-//delete one notification
-// export const deleteOneNotification = async (req, res, next) => {
-//   try {
-//     const notifyId = req.params.id;
-//     const userId = req.user._id;
-//     const notification = await Notification.findByIdAndDelete(notifyId);
-
-//     if (!notification) throw new CustomError("Notification not found", 404);
-//     if (notification.to.toString() !== userId)
-//       throw new CustomError("Unauthorized", 401);
-//     else await notification.save();
-//     res.status(200).json({ message: "Notification deleted successfully" });
-//   } catch (error) {
-//     next(error);
-//   }
-// };

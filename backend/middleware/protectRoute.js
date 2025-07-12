@@ -4,6 +4,7 @@ import { CustomError } from "./error.js";
 
 export const protectRoute =async(req,res,next)=>{
     try{
+        
         const token = req.cookies.token;
         if(!token){
             throw new CustomError("Unauthorized: No Token Provided",401);

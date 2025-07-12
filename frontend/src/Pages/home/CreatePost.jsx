@@ -5,12 +5,13 @@ import { IoCloseSharp } from "react-icons/io5";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import useAuthUser from "../../hooks/useAuthUser";
+// import useAuthUser from "../../hooks/useAuthUser";
 
 const CreatePost = () => {
   const [caption, setCaption] = useState("");
   const [image, setImage] = useState(null);
   const queryClient = useQueryClient();
-  const { data: authUser } = useAuthUser();
+   const { data: authUser } =useAuthUser();
 
   const imgRef = useRef(null);
 
@@ -20,7 +21,7 @@ const CreatePost = () => {
     isError,
     error,
   } = useMutation({
-    mutation: async ({ caption, image }) => {
+    mutationFn: async ({ caption, image }) => {
       try {
         const res = await fetch("/api/posts/create", {
           method: "POST",
@@ -72,7 +73,7 @@ const CreatePost = () => {
     <div className="flex p-4 items-start gap-4 border-b border-gray-700">
       <div className="avatar">
         <div className="w-8 rounded-full">
-          <img src={authUser.profileImg || "/avatar-placeholder.png"} />
+          <img src={authUser?.profileImg || "/avatar-placeholder.png"} />
         </div>
       </div>
       <form className="flex flex-col gap-2 w-full" onSubmit={handleSubmit}>

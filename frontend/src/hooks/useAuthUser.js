@@ -9,7 +9,7 @@ export default function useAuthUser() {
     queryFn: async () => {
       try {
         const res = await fetch("/api/auth/me", {
-            credentials: "include",
+          credentials: "include",
         });
         const data = await res.json();
         if (data.error) return null; // If there's an error, return null
@@ -19,6 +19,7 @@ export default function useAuthUser() {
         console.log("authUser is here", data);
         return data;
       } catch (error) {
+        console.error("Error fetching auth user:", error);
         return null; // Return null in case of an error
       }
     },

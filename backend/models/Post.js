@@ -22,7 +22,23 @@ const postSchema = new mongoose.Schema(
         default: null,
       },
     ],
-
+    reposts: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        default: null,
+      },
+    ],
+    repostedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    originalPost: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Post",
+      default: null,
+    },
     comments: [
       {
         comment: {
@@ -35,10 +51,17 @@ const postSchema = new mongoose.Schema(
           ref: "User",
           required: true,
         },
-        createdAt:{
+        likes: [
+          {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            default: null,
+          },
+        ],
+        createdAt: {
           type: Date,
           default: Date.now,
-        }
+        },
       },
     ],
     createdAt: {

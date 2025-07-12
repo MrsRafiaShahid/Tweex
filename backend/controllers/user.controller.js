@@ -11,9 +11,11 @@ import Notification from "../models/Notification.js";
 const getUserProfile = async (req, res, next) => {
   const { username } = req.params;
   try {
-    const user = await User.findOne({ username });
+    const user = await User.findOne({ username }).select("-password")
+      .populate("followers", "username profilePicture")
+      .populate("following", "username profilePicture");
     if (!user) throw new CustomError("User not found", 404);
-    res.status(200).json({ user, posts, stories, comments });
+    res.status(200).json(user);
   } catch (error) {
     next(error);
   }
@@ -25,7 +27,7 @@ const updateUser = async (req, res, next) => {
 
   const userID = req.user._id;
   try {
-    let user = await User.findById(userID);
+    let user = await User.findById(userID).select("-password");
     if (!user) {
       throw new CustomError("User not found", 404);
     }
@@ -96,19 +98,19 @@ const followUnfollowUser = async (req, res, next) => {
 
     if (isFollowing) {
       // Unfollow the user
-      await User.findByIdAndUpdate(id, { $pull: { followers: req.user._id } });
-      await User.findByIdAndUpdate(req.user._id, { $pull: { following: id } });
+      await User.findByIdAndUpdate(userID, { $pull: { followers: req.user._id } });
+      await User.findByIdAndUpdate(req.user._id, { $pull: { following: userID} });
 
       res.status(200).json({ message: "User unfollowed successfully" });
     } else {
       // Follow the user
-      await User.findByIdAndUpdate(id, { $push: { followers: req.user._id } });
-      await User.findByIdAndUpdate(req.user._id, { $push: { following: id } });
+      await User.findByIdAndUpdate(userID, { $push: { followers: req.user._id } });
+      await User.findByIdAndUpdate(req.user._id, { $push: { following: userID } });
       // Send notification to the user
       const newNotification = new Notification({
         type: "follow",
         from: req.user._id,
-        to: userToModify._id,
+        to: ModifyUser._id,
       });
       await newNotification.save();
     }

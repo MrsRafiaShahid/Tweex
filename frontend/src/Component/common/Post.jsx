@@ -1,46 +1,44 @@
-import { FaRegComment } from "react-icons/fa";
 import { BiRepost } from "react-icons/bi";
-import { FaRegHeart } from "react-icons/fa";
-import { FaRegBookmark } from "react-icons/fa6";
-import { FaTrash } from "react-icons/fa";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import {useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { formatPostDate } from "../../utils/date";
 import LoadingSpinner from "./LoadingSpinner";
+import useAuthUser from "../../hooks/useAuthUser";
+import PostComponent from "./PostComponent";
 
 const Post = ({ post }) => {
   const [comment, setComment] = useState("");
   const queryClient = useQueryClient();
-  const { data: authUser } = useQuery({ queryKey: ["authUser"] });
+  const { data: authUser, isLoading: authLoading } = useAuthUser();
   const postOwner = post.user;
-  const isLiked = post.likes.includes(authUser._id);
- const { mutate: deletePost, isPending: isDeleting } = useMutation({
-		mutationFn: async () => {
-			try {
-				const res = await fetch(`/api/posts/${post._id}`, {
-					method: "DELETE",
-				});
-				const data = await res.json();
 
-				if (!res.ok) {
-					throw new Error(data.error || "Something went wrong");
-				}
-				return data;
-			} catch (error) {
-				throw new Error(error);
-			}
-		},
-		onSuccess: () => {
-			toast.success("Post deleted successfully");
-			queryClient.invalidateQueries({ queryKey: ["posts"] });
-		},
-	});
-  const { mutate: likePost, isPending: isLiking } = useMutation({
-    mutation: async () => {
+  const { mutate: deletePost, isPending: isDeleting } = useMutation({
+    mutationFn: async () => {
       try {
-        const res = await fetch(`/api/posts/likes/${post._id}`, {
+        const res = await fetch(`/api/posts/${post._id}`, {
+          method: "DELETE",
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Something went wrong");
+        }
+        return data;
+      } catch (error) {
+        throw new Error(error);
+      }
+    },
+    onSuccess: () => {
+      toast.success("Post deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+    },
+  });
+  const { mutate: likePost, isPending: isLiking } = useMutation({
+    mutationFn: async () => {
+      try {
+        const res = await fetch(`/api/posts/like/${post._id}`, {
           method: "POST",
         });
         const data = await res.json();
@@ -67,14 +65,14 @@ const Post = ({ post }) => {
     },
   });
   const { mutate: commentPost, isPending: isCommenting } = useMutation({
-    mutation: async () => {
+    mutationFn: async () => {
       try {
         const res = await fetch(`/api/posts/comment/${post._id}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ caption: comment }),
+          body: JSON.stringify({ comment: comment }),
         });
         const data = await res.json();
         if (!res.ok) {
@@ -86,18 +84,81 @@ const Post = ({ post }) => {
       }
     },
     onSuccess: () => {
-      toast.success("Comment posted successfully")
-      setComment("")
-      queryClient.invalidateQueries({queryKey:["posts"]})
+      toast.success("Comment posted successfully");
+      setComment("");
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
     onError: (error) => {
       toast.error(error.message);
     },
   });
-  const isMyPost = authUser._id === post.user._id;
+  const { mutate: repost, isPending: isReposting } = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/posts/repost/${post._id}`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Something went wrong");
+      }
+      return data;
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(["posts"], (oldData) => {
+        return oldData.map((p) => {
+          if (p._id === post._id) {
+            return { ...p, reposts: data.reposts };
+          }
+          return p;
+        });
+      });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+  // Add this mutation inside your Post component
+  const { mutate: likeComment, isPending: isCommentLiking } = useMutation({
+    mutationFn: async (commentId) => {
+      const res = await fetch(`/api/posts/${post._id}/comments/${commentId}/like`, {
+        method: "POST",
+        credentials: "include",
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to like comment");
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(["posts"], (oldData) => {
+        return oldData.map((p) => {
+          if (p._id === post._id) {
+            const updatedComments = p.comments.map((c) => 
+              c._id === data.updatedComment._id ? data.updatedComment : c
+            );
+            return { ...p, comments: updatedComments };
+          }
+          return p;
+        });
+      });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    }
+  });
+  const isMyPost = authUser?._id === post?.user?._id;
+  // Add at the top of your component
+  if (authLoading) return <LoadingSpinner size="md" />;
+  if (!authUser) return <div>Error loading user data</div>;
+  if (!post) return <p className="text-center my-4">Post not found</p>;
 
-  const formattedDate = formatPostDate(post.createdAt);
+  const formattedDate = formatPostDate(post?.createdAt);
 
+const handleLikeComment = (commentId) => {
+  likeComment(commentId);
+};
   const handleDeletePost = () => {
     deletePost();
   };
@@ -112,159 +173,103 @@ const Post = ({ post }) => {
     if (isLiking) return;
     likePost();
   };
-
+  const handleRepost = () => {
+    if (isReposting) return;
+    repost();
+  };
+  if (post.repostedBy && post.repostedBy._id === authUser._id) {
+    return (
+      <PostComponent
+        post={post}
+        postOwner={postOwner}
+        formattedDate={formattedDate}
+        isMyPost={isMyPost}
+        isDeleting={isDeleting}
+        isLiking={isLiking}
+        isCommenting={isCommenting}
+        isReposting={isReposting}
+        handleDeletePost={handleDeletePost}
+        handlePostComment={handlePostComment}
+        handleLikePost={handleLikePost}
+        handleRepost={handleRepost}
+        comment={comment}
+        setComment={setComment}
+        authUser={authUser}
+        formatPostDate={formatPostDate}
+        handleLikeComment={handleLikeComment}
+        isCommentLiking={isCommentLiking}
+      />
+    );
+  }
+  {
+    post.repostedBy && (
+      <div className="flex items-center gap-1 text-slate-500 text-sm mb-1">
+        <BiRepost className="w-4 h-4 text-green-500" />
+        <span>Reposted By</span>
+        <Link
+          to={`/profile/${post.repostedBy.username}`}
+          className="font-semibold text-green-300 hover:text-sky-400"
+        >
+          @{post.repostedBy.username}
+        </Link>
+      </div>
+    );
+  }
+  {
+    post.orignalPost && (
+      <div className="border border-gray-600 rounded-lg p-4 mb-4 mt-2">
+        <div className="flex items-center gap-2 mb-2">
+          <img
+            src={
+              post.orignalPost.user.profilePicture || "/avatar-placeholder.png"
+            }
+            className="w-8 h-8 rounded-full"
+            alt="Original Post Owner"
+          />
+          <span className="font-bold">{post.orignalPost.user.fullName}</span>
+          <span className="text-sm text-gray-500">
+            @{post.orignalPost.user.username}
+          </span>
+        </div>
+        <p className="mt-2">{post.orignalPost.caption}</p>
+        {post.orignalPost.image && (
+          <img
+            src={post.orignalPost.image}
+            className="mt-2 w-full h-64 object-contain border border-gray-700 rounded-lg"
+            alt="Original Post Image"
+          />
+        )}
+        <span className="text-xs text-gray-500">
+          {formatPostDate(post.orignalPost.createdAt)}
+        </span>
+      </div>
+    );
+  }
+  if (!postOwner) {
+    return <p className="text-center my-4">Post owner not found</p>;
+  }
   return (
     <>
-      <div className="flex gap-2 items-start p-4 border-b border-gray-700">
-        <div className="avatar">
-          <Link
-            to={`/profile/${postOwner.username}`}
-            className="w-8 rounded-full overflow-hidden"
-          >
-            <img src={postOwner.profilePicture || "/avatar-placeholder.png"} />
-          </Link>
-        </div>
-        <div className="flex flex-col flex-1">
-          <div className="flex gap-2 items-center">
-            <Link to={`/profile/${postOwner.username}`} className="font-bold">
-              {postOwner.fullName}
-            </Link>
-            <span className="text-gray-700 flex gap-1 text-sm">
-              <Link to={`/profile/${postOwner.username}`}>
-                @{postOwner.username}
-              </Link>
-              <span>·</span>
-              <span>{formattedDate}</span>
-            </span>
-            {isMyPost && (
-              <span className="flex justify-end flex-1">
-                {!isDeleting && (
-                  <FaTrash
-                    className="cursor-pointer hover:text-red-500"
-                    onClick={handleDeletePost}
-                  />
-                )}
-
-                {isDeleting && <LoadingSpinner size="sm" />}
-              </span>
-            )}
-          </div>
-          <div className="flex flex-col gap-3 overflow-hidden">
-            <span>{post.text}</span>
-            {post.img && (
-              <img
-                src={post.img}
-                className="h-80 object-contain rounded-lg border border-gray-700"
-                alt=""
-              />
-            )}
-          </div>
-          <div className="flex justify-between mt-3">
-            <div className="flex gap-4 items-center w-2/3 justify-between">
-              <div
-                className="flex gap-1 items-center cursor-pointer group"
-                onClick={() =>
-                  document
-                    .getElementById("comments_modal" + post._id)
-                    .showModal()
-                }
-              >
-                <FaRegComment className="w-4 h-4  text-slate-500 group-hover:text-sky-400" />
-                <span className="text-sm text-slate-500 group-hover:text-sky-400">
-                  {post.comments.length}
-                </span>
-              </div>
-              {/* We're using Modal Component from DaisyUI */}
-              <dialog
-                id={`comments_modal${post._id}`}
-                className="modal border-none outline-none"
-              >
-                <div className="modal-box rounded border border-gray-600">
-                  <h3 className="font-bold text-lg mb-4">COMMENTS</h3>
-                  <div className="flex flex-col gap-3 max-h-60 overflow-auto">
-                    {post.comments.length === 0 && (
-                      <p className="text-sm text-slate-500">
-                        No comments yet 🤔 Be the first one 😉
-                      </p>
-                    )}
-                    {post.comments.map((comment) => (
-                      <div key={comment._id} className="flex gap-2 items-start">
-                        <div className="avatar">
-                          <div className="w-8 rounded-full">
-                            <img
-                              src={
-                                comment.user.profilePicture ||
-                                "/avatar-placeholder.png"
-                              }
-                            />
-                          </div>
-                        </div>
-                        <div className="flex flex-col">
-                          <div className="flex items-center gap-1">
-                            <span className="font-bold">
-                              {comment.user.fullName}
-                            </span>
-                            <span className="text-gray-700 text-sm">
-                              @{comment.user.username}
-                            </span>
-                          </div>
-                          <div className="text-sm">{comment.text}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <form
-                    className="flex gap-2 items-center mt-4 border-t border-gray-600 pt-2"
-                    onSubmit={handlePostComment}
-                  >
-                    <textarea
-                      className="textarea w-full p-1 rounded text-md resize-none border focus:outline-none  border-gray-800"
-                      placeholder="Add a comment..."
-                      value={comment}
-                      onChange={(e) => setComment(e.target.value)}
-                    />
-                    <button className="btn btn-primary rounded-full btn-sm text-white px-4">
-                      {isCommenting ? <LoadingSpinner size="md" /> : "Post"}
-                    </button>
-                  </form>
-                </div>
-                <form method="dialog" className="modal-backdrop">
-                  <button className="outline-none">close</button>
-                </form>
-              </dialog>
-              <div className="flex gap-1 items-center group cursor-pointer">
-                <BiRepost className="w-6 h-6  text-slate-500 group-hover:text-green-500" />
-                <span className="text-sm text-slate-500 group-hover:text-green-500">
-                  0
-                </span>
-              </div>
-              <div
-                className="flex gap-1 items-center group cursor-pointer"
-                onClick={handleLikePost}
-              >
-                {isLiking && <LoadingSpinner size="sm" />}
-                {!isLiked && !isLiking && (
-                  <FaRegHeart className="w-4 h-4 cursor-pointer text-slate-500 group-hover:text-pink-500" />
-                )}
-                {isLiked && !isLiking && (
-                  <FaRegHeart className="w-4 h-4 cursor-pointer text-pink-500 " />
-                )}
-
-                <span
-                  className={`text-sm  group-hover:text-pink-500 ${
-                    isLiked ? "text-pink-500" : "text-slate-500"
-                  }`}
-                >
-                  {post.likes.length}
-                </span>
-              </div>
-            </div>
-            <div className="flex w-1/3 justify-end gap-2 items-center">
-              <FaRegBookmark className="w-4 h-4 text-slate-500 cursor-pointer" />
-            </div>
-          </div>
-        </div>
-      </div>
+      <PostComponent
+        post={post}
+        postOwner={postOwner}
+        formattedDate={formattedDate}
+        isMyPost={isMyPost}
+        isDeleting={isDeleting}
+        isLiking={isLiking}
+        isCommenting={isCommenting}
+        isReposting={isReposting}
+        handleDeletePost={handleDeletePost}
+        handlePostComment={handlePostComment}
+        handleLikePost={handleLikePost}
+        handleRepost={handleRepost}
+        comment={comment}
+        setComment={setComment}
+        authUser={authUser}
+        formatPostDate={formatPostDate}
+        handleLikeComment={handleLikeComment}
+        isCommentLiking={isCommentLiking}
+      />
     </>
   );
 };

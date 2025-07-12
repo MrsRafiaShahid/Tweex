@@ -10,11 +10,13 @@ const useFollow = () => {
       try {
         const res = await fetch(`/api/user/follow/${userId}`, {
           method: "POST",
+          credentials: "include", // Include cookies in the request
         });
         const data = res.json();
         if (!res.ok) {
           throw new Error(data.error || "Something went wrong");
         }
+        return data;
       } catch (error) {
         throw new Error(error.message);
       }

@@ -7,7 +7,8 @@ const useUpdateProfile = () => {
     mutationFn: async (formData) => {
       try {
         const res = await fetch("/api/user/update", {
-          method: "PUT",
+          method: "POST",
+          credentials: "include", // Include cookies in the request
           headers: {
             "Content-Type": "application/json",
           },
@@ -19,7 +20,7 @@ const useUpdateProfile = () => {
         }
         return data;
       } catch (error) {
-        throw new Error(error);
+        throw new Error(error.message || "Failed to update profile");
       }
     },
     onSuccess: () => {
@@ -34,7 +35,7 @@ const useUpdateProfile = () => {
       toast.error(error);
     },
   });
-  return <>{(updateProfile, isUpdateProfile)}</>;
+  return {updateProfile, isUpdateProfile};
 };
 
 export default useUpdateProfile;

@@ -4,11 +4,11 @@ import LoadingSpinner from "../../Component/common/LoadingSpinner";
 import { IoSettingsOutline } from "react-icons/io5";
 import { FaUser } from "react-icons/fa";
 import { FaHeart } from "react-icons/fa6";
-import { QueryClient, useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
 const Notification = () => {
-  const queryClient = QueryClient();
+  const queryClient = useQueryClient();
   const { data: notifications, isLoading } = useQuery({
     queryKey: ["notifications"],
     queryFn: async () => {
@@ -85,6 +85,15 @@ const Notification = () => {
               {notification.type === "like" && (
                 <FaHeart className="w-7 h-7 text-red-500" />
               )}
+              {notification.type === "repost" && (
+                <FaHeart className="w-7 h-7 text-green-500" />
+              )}
+              {notification.type === "comment" && (
+                <FaHeart className="w-7 h-7 text-blue-500" />
+              )}
+              {notification.type === "commentLike" && (
+                <FaHeart className="w-7 h-7 text-yellow-500" />
+              )}
               <Link to={`/profile/${notification.from.username}`}>
                 <div className="avatar">
                   <div className="w-8 rounded-full">
@@ -100,9 +109,19 @@ const Notification = () => {
                   <span className="font-bold">
                     @{notification.from.username}
                   </span>{" "}
-                  {notification.type === "follow"
-                    ? "followed you"
-                    : "liked your post"}
+                  <span className="text-sm">
+                    {notification.type === "follow"
+                      ? "started following you"
+                      : notification.type === "like"
+                      ? "liked your post"
+                      : notification.type === "comment"
+                      ? "commented on your post"
+                      : notification.type === "repost"
+                      ? "reposted your post"
+                      : notification.type === "commentLike"
+                      ? "liked your comment"
+                      : ""}
+                  </span>
                 </div>
               </Link>
             </div>
