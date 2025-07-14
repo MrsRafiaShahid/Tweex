@@ -117,14 +117,16 @@ const Post = ({ post }) => {
       toast.error(error.message);
     },
   });
-  // Add this mutation inside your Post component
   const { mutate: likeComment, isPending: isCommentLiking } = useMutation({
     mutationFn: async (commentId) => {
-      const res = await fetch(`/api/posts/${post._id}/comments/${commentId}/like`, {
-        method: "POST",
-        credentials: "include",
-      });
-      
+      const res = await fetch(
+        `/api/posts/${post._id}/comments/${commentId}/like`,
+        {
+          method: "POST",
+          credentials: "include",
+        }
+      );
+
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.error || "Failed to like comment");
@@ -135,7 +137,7 @@ const Post = ({ post }) => {
       queryClient.setQueryData(["posts"], (oldData) => {
         return oldData.map((p) => {
           if (p._id === post._id) {
-            const updatedComments = p.comments.map((c) => 
+            const updatedComments = p.comments.map((c) =>
               c._id === data.updatedComment._id ? data.updatedComment : c
             );
             return { ...p, comments: updatedComments };
@@ -146,7 +148,7 @@ const Post = ({ post }) => {
     },
     onError: (error) => {
       toast.error(error.message);
-    }
+    },
   });
   const isMyPost = authUser?._id === post?.user?._id;
   // Add at the top of your component
@@ -156,9 +158,9 @@ const Post = ({ post }) => {
 
   const formattedDate = formatPostDate(post?.createdAt);
 
-const handleLikeComment = (commentId) => {
-  likeComment(commentId);
-};
+  const handleLikeComment = (commentId) => {
+    likeComment(commentId);
+  };
   const handleDeletePost = () => {
     deletePost();
   };
@@ -177,7 +179,7 @@ const handleLikeComment = (commentId) => {
     if (isReposting) return;
     repost();
   };
-  if (post.repostedBy && post.repostedBy._id === authUser._id) {
+  if (post.repostedBy && post.repostedBy._id === authUser?._id) {
     return (
       <PostComponent
         post={post}
@@ -221,26 +223,26 @@ const handleLikeComment = (commentId) => {
         <div className="flex items-center gap-2 mb-2">
           <img
             src={
-              post.orignalPost.user.profilePicture || "/avatar-placeholder.png"
+              post.orignalPost.user?.profilePicture || "/avatar-placeholder.png"
             }
             className="w-8 h-8 rounded-full"
             alt="Original Post Owner"
           />
-          <span className="font-bold">{post.orignalPost.user.fullName}</span>
+          <span className="font-bold">{post.orignalPost.user?.fullName}</span>
           <span className="text-sm text-gray-500">
-            @{post.orignalPost.user.username}
+            @{post.orignalPost.user?.username}
           </span>
         </div>
-        <p className="mt-2">{post.orignalPost.caption}</p>
+        <p className="mt-2">{post.orignalPost?.caption}</p>
         {post.orignalPost.image && (
           <img
-            src={post.orignalPost.image}
+            src={post.orignalPost?.image}
             className="mt-2 w-full h-64 object-contain border border-gray-700 rounded-lg"
             alt="Original Post Image"
           />
         )}
         <span className="text-xs text-gray-500">
-          {formatPostDate(post.orignalPost.createdAt)}
+          {formatPostDate(post.orignalPost?.createdAt)}
         </span>
       </div>
     );
