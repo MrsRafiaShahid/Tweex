@@ -157,7 +157,7 @@ frontend/
 - Cloudinary account (for image storage)
 
 #### Backend Setup
-    Create a .env file in the backend root with:
+- Create a .env file in the backend root with:
 ```
  MONGODB_URI=your_mongodb_connection_string
 JWT_SECRET=your_jwt_secret
