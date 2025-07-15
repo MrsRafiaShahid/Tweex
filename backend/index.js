@@ -1,5 +1,5 @@
 import express from "express";
-
+import path from "path";
 // Connect to MongoDB database
 import connectDB from "./database/db.js";
 //routes
@@ -41,10 +41,19 @@ app.use("/api/auth", authRoute);
 app.use("/api/posts", postRoute);
 app.use("/api/notifications", notificationRoute);
 
+
+
 const PORT = process.env.PORT || 5000;
-app.get("/", (req, res) => {
-  res.send("Hello from the server!");
-});
+const __dirname =path.resolve()
+// Serve static files from the frontend build directory
+if(process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "/frontend/dist")));
+  // Handle any requests that don't match the above routes
+  app.get("*", (req, res) => {
+    res.sendFile(path.resolve(__dirname, "frontend","dist", "index.html"));
+  });
+}
+// Start the server and connect to the database
 app.listen(PORT, async () => {
   await connectDB();
   console.log(`Server running on port ${PORT}`);

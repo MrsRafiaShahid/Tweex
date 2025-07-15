@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npx tailwindcss -i ./css/input.css -o ./css/output.css --watch",
-    "start": "node backend/index.js",
-    "start-dev": "nodemon backend/index.js"
+    "build": "npm install && npm install --prefix frontend && npm run build --prefix frontend",
+    "start": "cross-env NODE_ENV=production node backend/index.js",
+    "dev": "cross-env NODE_ENV=development nodemon backend/index.js"
   },
   "keywords": [],
   "author": "",
@@ -18,6 +18,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.10",
+    "cross-env": "^7.0.3",
     "tailwindcss": "^3.4.17"
   },
   "dependencies": {
