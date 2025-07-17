@@ -22,7 +22,7 @@ const upload = multer({storage});
 //get post
 router.get("/all", protectRoute, getPost);
 //create post
-router.post("/create", protectRoute,upload.single(image), createPost);
+router.post("/create", protectRoute,upload.single("image"), createPost);
 //get follow post
 router.get("/following", protectRoute, getFollowPost);
 //get user post
