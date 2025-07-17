@@ -26,7 +26,7 @@ const app = express();
 app.use(cookieParser());
 // Enable CORS for all routes
 const corsOptions = {
-  origin: "http://localhost:5173", // Your frontend URL
+  origin:process.env.CLIENT_URL || "http://localhost:5173", // Your frontend URL
   credentials: true, // Allow credentials (cookies, authorization headers, etc.)
 };
 app.use(cors(corsOptions));
@@ -41,20 +41,24 @@ app.use("/api/auth", authRoute);
 app.use("/api/posts", postRoute);
 app.use("/api/notifications", notificationRoute);
 
-
-
 const PORT = process.env.PORT || 5000;
-const __dirname =path.resolve()
+const HOST = "0.0.0.0"
+const __dirname = path.resolve();
 // Serve static files from the frontend build directory
-if(process.env.NODE_ENV === "production") {
+if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "/frontend/dist")));
   // Handle any requests that don't match the above routes
   app.get("*", (req, res) => {
-    res.sendFile(path.resolve(__dirname, "frontend","dist", "index.html"));
+    res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"));
   });
 }
 // Start the server and connect to the database
-app.listen(PORT, async () => {
-  await connectDB();
-  console.log(`Server running on port ${PORT}`);
+app.listen(PORT,HOST, async () => {
+  try {
+    await connectDB();
+    console.log(`Server running on port http://${HOST} ${PORT}`);
+  } catch (error) {
+    console.error("Error connecting to the database:", error);
+    process.exit(1); // Exit the process with failure
+  }
 });
