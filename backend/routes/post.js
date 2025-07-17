@@ -17,12 +17,11 @@ import {
   updatePost,
 } from "../controllers/post.controller.js";
 const router = express.Router();
-const storage = multer.memoryStorage();
-const upload = multer({storage});
+
 //get post
 router.get("/all", protectRoute, getPost);
 //create post
-router.post("/create", protectRoute,upload.single("image"), createPost);
+router.post("/create", protectRoute, createPost);
 //get follow post
 router.get("/following", protectRoute, getFollowPost);
 //get user post
