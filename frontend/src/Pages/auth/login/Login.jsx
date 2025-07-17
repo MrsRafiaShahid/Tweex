@@ -20,7 +20,7 @@ const Login = () => {
     error,
   } = useMutation({
     mutationFn: async ({ username, password }) => {
-      return fetchData("/auth/login", {
+      return fetchData("/api/auth/login", {
         method: "POST",
         body: JSON.stringify({ username, password }),
       });
