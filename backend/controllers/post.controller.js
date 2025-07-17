@@ -7,8 +7,8 @@ import Notification from "../models/Notification.js";
 
 export const createPost = async (req, res, next) => {
   try {
-    const { caption,image } = req.body;
-    // let { image } = req.body; // for cloudinary file upload
+    const { caption } = req.body;
+    let { image } = req.body; // for cloudinary file upload
     const userID = req.user._id.toString();
     const user = await User.findById(userID);
     if (!user) throw new CustomError("User not found", 404);
