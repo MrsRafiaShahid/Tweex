@@ -26,7 +26,7 @@ const app = express();
 app.use(cookieParser());
 // Enable CORS for all routes
 const corsOptions = {
-  origin:process.env.CLIENT_URL || "http://localhost:5173", // Your frontend URL
+  origin:process.env.VITE_API_BASE_URL || "http://localhost:5173", // Your frontend URL
   credentials: true, // Allow credentials (cookies, authorization headers, etc.)
 };
 app.use(cors(corsOptions));
