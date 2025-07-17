@@ -8,16 +8,18 @@ import Notification from "../models/Notification.js";
 export const createPost = async (req, res, next) => {
   try {
     const { caption } = req.body;
-    let { image } = req.body; // for cloudinary file upload
     const userID = req.user._id.toString();
     const user = await User.findById(userID);
     if (!user) throw new CustomError("User not found", 404);
-    if (!caption && !image) {
+    if (!caption && !req.file) {
       throw new CustomError("Caption  or image is required", 400);
     }
-    if (image) {
+
+    let image = null;
+    if (req.file) {
       try {
-        const uploadedImage = await cloudinary.uploader.upload(image);
+        const base64Image =`data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+        const uploadedImage = await cloudinary.uploader.upload(base64Image);
         image = uploadedImage.secure_url;
       } catch (uploadError) {
         console.error("Cloudinary upload error:", uploadError);

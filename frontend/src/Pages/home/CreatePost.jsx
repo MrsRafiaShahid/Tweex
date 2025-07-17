@@ -21,15 +21,19 @@ const CreatePost = () => {
     isError,
     error,
   } = useMutation({
-    mutationFn: async ({ caption, image }) => {
+    mutationFn: async () => {
       try {
+        // Check if caption is empty
+        const formData = new FormData();
+        formData.append("image", imgRef.current.files[0]);
+        formData.append("caption", caption);
         const res = await fetch("/api/posts/create", {
           method: "POST",
           credentials: "include", // Include cookies in the request
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ caption, image }),
+          body: formData,
           
         });
         const data = await res.json();
