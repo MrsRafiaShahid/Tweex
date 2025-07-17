@@ -32,7 +32,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Middleware to parse JSON bodies
-app.use(express.json({ limit: "5mb" }));
+app.use(express.json({ limit: "15mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(errorHandler);
 //routes for user and auth post
