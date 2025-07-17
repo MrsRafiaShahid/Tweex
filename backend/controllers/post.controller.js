@@ -15,20 +15,16 @@ export const createPost = async (req, res, next) => {
     if (!caption && !image) {
       throw new CustomError("Caption  or image is required", 400);
     }
-    let imgUrl="";
-    // If image is provided, upload it to Cloudinary
     if (image) {
       try {
-        const uploadedImage = await cloudinary.uploader.upload(image,{
-          folder:"posts",
-        });
-      imgUrl = uploadedImage.secure_url;
+        const uploadedImage = await cloudinary.uploader.upload(image);
+        image = uploadedImage.secure_url;
       } catch (uploadError) {
         console.error("Cloudinary upload error:", uploadError);
         throw new CustomError("Image upload failed", 500);
       }
     }
-    const newPost = new Post({ caption, user: userID, image: imgUrl });
+    const newPost = new Post({ caption, user: userID, image });
     await newPost.save();
     user.posts.push(newPost._id);
     await user.save(); // Save the user to the database
