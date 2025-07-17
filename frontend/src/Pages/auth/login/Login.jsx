@@ -5,7 +5,6 @@ import { MdOutlineMail } from "react-icons/md";
 import { MdLock } from "react-icons/md";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { fetchData } from "../../../hooks/api.js";
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -20,10 +19,23 @@ const Login = () => {
     error,
   } = useMutation({
     mutationFn: async ({ username, password }) => {
-      return fetchData("/api/auth/login", {
+      const res = await fetch('/api/auth/login', {
         method: "POST",
+        credentials: "include", // Include cookies in the request
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ username, password }),
       });
+      // Check content type before parsing
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        const text = await res.text();
+        throw new Error(`Invalid response: ${text.substring(0, 100)}`);
+      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Something went wrong");
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
