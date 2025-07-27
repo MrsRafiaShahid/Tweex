@@ -30,8 +30,9 @@ const PostComponent = ({
   isCommentLiking,
 }) => {
   const isLiked = post.likes.includes(authUser?._id);
-  const isReposted = post.reposts.includes(authUser?._id) || 
-                    post.repostedBy?._id === authUser?._id;
+  const isReposted =
+    post.reposts.includes(authUser?._id) ||
+    post.repostedBy?._id === authUser?._id;
 
   return (
     <div className="flex gap-2 items-start p-4 border-b border-base-300">
@@ -40,25 +41,25 @@ const PostComponent = ({
           to={`/profile/${postOwner?.username}`}
           className="w-8 rounded-full overflow-hidden"
         >
-          <img 
-            src={postOwner?.profilePicture || "/avatar-placeholder.png"} 
+          <img
+            src={postOwner?.profilePicture || "/avatar-placeholder.png"}
             alt={postOwner?.username}
           />
         </Link>
       </div>
-      
+
       <div className="flex flex-col flex-1">
         {/* Header with user info */}
         <div className="flex gap-2 items-center">
-          <Link 
-            to={`/profile/${postOwner?.username}`} 
+          <Link
+            to={`/profile/${postOwner?.username}`}
             className="font-bold text-base-content"
           >
             {postOwner?.fullName}
           </Link>
-          
+
           <span className="flex gap-1 text-sm text-base-content opacity-70">
-            <Link 
+            <Link
               to={`/profile/${postOwner?.username}`}
               className="hover:underline"
             >
@@ -67,7 +68,7 @@ const PostComponent = ({
             <span>·</span>
             <span>{formattedDate}</span>
           </span>
-          
+
           {isMyPost && (
             <div className="flex justify-end flex-1">
               {!isDeleting ? (
@@ -87,7 +88,7 @@ const PostComponent = ({
           <span className="text-base-content">{post?.caption}</span>
           {post.image && (
             <img
-              src={post.image}
+              src={post?.image}
               className="h-80 object-contain rounded-lg border border-base-300"
               alt="Post content"
             />
@@ -100,14 +101,16 @@ const PostComponent = ({
             {/* Comments */}
             <div
               className="flex gap-1 items-center cursor-pointer group"
-              onClick={() => document.getElementById(`comments_modal${post._id}`).showModal()}
+              onClick={() =>
+                document.getElementById(`comments_modal${post._id}`).showModal()
+              }
             >
               <FaRegComment className="w-4 h-4 text-base-content opacity-70 group-hover:text-primary" />
               <span className="text-sm text-base-content opacity-70 group-hover:text-primary">
-                {post.comments.length}
+                {post.comments?.length}
               </span>
             </div>
-            
+
             {/* Repost */}
             <div
               className="flex gap-1 items-center group cursor-pointer"
@@ -117,20 +120,24 @@ const PostComponent = ({
                 <LoadingSpinner size="sm" />
               ) : (
                 <BiRepost
-                  className={`w-6 h-6 ${isReposted 
-                    ? "text-success" 
-                    : "text-base-content opacity-70 group-hover:text-success"}`}
+                  className={`w-6 h-6 ${
+                    isReposted
+                      ? "text-success"
+                      : "text-base-content opacity-70 group-hover:text-success"
+                  }`}
                 />
               )}
               <span
-                className={`text-sm ${isReposted 
-                  ? "text-success" 
-                  : "text-base-content opacity-70 group-hover:text-success"}`}
+                className={`text-sm ${
+                  isReposted
+                    ? "text-success"
+                    : "text-base-content opacity-70 group-hover:text-success"
+                }`}
               >
-                {post.reposts.length}
+                {post?.reposts?.length}
               </span>
             </div>
-            
+
             {/* Like */}
             <div
               className="flex gap-1 items-center group cursor-pointer"
@@ -140,9 +147,11 @@ const PostComponent = ({
                 <LoadingSpinner size="sm" />
               ) : (
                 <FaRegHeart
-                  className={`w-6 h-6 ${isLiked
-                    ? "text-pink-500 fill-pink-500"
-                    : "text-base-content opacity-70 group-hover:text-pink-500"}`}
+                  className={`w-6 h-6 ${
+                    isLiked
+                      ? "text-pink-500 fill-pink-500"
+                      : "text-base-content opacity-70 group-hover:text-pink-500"
+                  }`}
                 />
               )}
               <span
@@ -150,17 +159,17 @@ const PostComponent = ({
                   isLiked ? "text-pink-500" : "text-base-content opacity-70"
                 }`}
               >
-                {post.likes.length}
+                {post.likes?.length}
               </span>
             </div>
           </div>
-          
+
           <div className="flex w-1/3 justify-end gap-2 items-center">
             <FaRegBookmark className="w-4 h-4 text-base-content opacity-70 cursor-pointer hover:text-warning" />
           </div>
         </div>
       </div>
-      
+
       {/* Comments Modal */}
       <dialog
         id={`comments_modal${post._id}`}
@@ -179,7 +188,10 @@ const PostComponent = ({
                   <div className="avatar">
                     <div className="w-8 rounded-full">
                       <img
-                        src={comment.user?.profilePicture || "/avatar-placeholder.png"}
+                        src={
+                          comment.user?.profilePicture ||
+                          "/avatar-placeholder.png"
+                        }
                         alt={comment.user?.username}
                       />
                     </div>
@@ -230,7 +242,7 @@ const PostComponent = ({
               value={comment}
               onChange={(e) => setComment(e.target.value)}
             />
-            <button 
+            <button
               className="btn btn-primary rounded-full btn-sm px-4"
               disabled={isCommenting}
             >

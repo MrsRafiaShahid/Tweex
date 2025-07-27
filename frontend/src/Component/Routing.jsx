@@ -24,9 +24,9 @@ const Routing = () => {
       <div className="flex max-w-6xl mx-auto">
         {/* Common component, bc its not supported with Routes  */}
         {authUser && <Sidebar />}
-        <Routes>
           {/* Define routes for different pages */}
           {/* If user is authenticated, they can access these routes, otherwise redirect to login */}
+        <Routes>
           <Route
             path="/"
             element={authUser ? <Home /> : <Navigate to="/login" />}

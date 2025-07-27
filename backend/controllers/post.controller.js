@@ -83,23 +83,18 @@ export const updatePost = async (req, res, next) => {
 //get post
 export const getPost = async (req, res, next) => {
   try {
-    const posts = await Post.find({
-      $or: [{ repostedBy: null }, { repostedBy: req.user._id }],
-    })
+    const posts = await Post.find()
       .populate("user", "-password")
       .populate("comments.user", "-password")
-      .populate("repostedBy", "username profilePicture")
+      .populate("repostedBy", "username profilePicture fullName")
       .populate({
         path: "originalPost",
-        populate: {
+        populate: [{
           path: "user",
-          select: "-password",
-        },
+          select: "username profilePicture fullName"
+        }]
       })
       .sort({ createdAt: -1 });
-    if (posts.length === 0) {
-      return res.status(200).json([]);
-    }
 
     res.status(200).json(posts);
   } catch (error) {
@@ -175,8 +170,10 @@ export const likeUnlikeComment = async (req, res, next) => {
   try {
     const { postId, commentId } = req.params;
     const userId = req.user._id;
-    const post = await Post.findById(postId)
-      .populate("comments.user", "username fullName profilePicture"); // Add population
+    const post = await Post.findById(postId).populate(
+      "comments.user",
+      "username fullName profilePicture"
+    ); // Add population
     if (!post) throw new CustomError("Post not found", 404);
     const comment = post.comments.id(commentId);
     if (!comment) throw new CustomError("Comment not found", 404);
@@ -195,12 +192,13 @@ export const likeUnlikeComment = async (req, res, next) => {
         comment: commentId,
       });
       await notification.save();
-      
     }
     await post.save();
-     const updatedComment = post.comments.id(commentId);
-   res.status(200).json({
-      message: userLike ? "Comment unliked successfully" : "Comment liked successfully",
+    const updatedComment = post.comments.id(commentId);
+    res.status(200).json({
+      message: userLike
+        ? "Comment unliked successfully"
+        : "Comment liked successfully",
       updatedComment: {
         _id: updatedComment._id,
         user: updatedComment.user, // Now includes user info
@@ -258,10 +256,41 @@ export const repostPost = async (req, res, next) => {
     const { postId } = req.params;
     const userId = req.user._id;
     const originalPost = await Post.findById(postId)
-      .populate("user", "-password")
-      .populate("comments.user", "-password");
+      .populate("user", "username profilePicture fullName")
+      .lean();
+      
     if (!originalPost) throw new CustomError("Post not found", 404);
-    // Create repost
+
+    // Check if user has already reposted this
+    const existingRepost = await Post.findOne({
+      user: userId,
+      originalPost: postId
+    });
+
+    if (existingRepost) {
+      // Unrepost - delete the repost
+      await Post.deleteOne({ _id: existingRepost._id });
+      
+      // Remove user from original post's reposts
+      await Post.findByIdAndUpdate(postId, {
+        $pull: { reposts: userId }
+      });
+
+      // Delete notification
+      await Notification.deleteOne({
+        from: userId,
+        to: originalPost.user,
+        type: "repost",
+        post: existingRepost._id
+      });
+
+      return res.status(200).json({ 
+        message: "Unreposted successfully",
+        unrepostId: existingRepost._id 
+      });
+    }
+
+    // Create new repost
     const repost = new Post({
       user: userId,
       originalPost: postId,
@@ -274,9 +303,10 @@ export const repostPost = async (req, res, next) => {
     });
 
     await repost.save();
+
     // Add to original post's reposts
     await Post.findByIdAndUpdate(postId, {
-      $push: { reposts: userId },
+      $push: { reposts: userId }
     });
 
     // Create notification
@@ -284,10 +314,22 @@ export const repostPost = async (req, res, next) => {
       from: userId,
       to: originalPost.user,
       type: "repost",
+      post: repost._id,
     });
     await notification.save();
 
-    res.status(201).json(repost);
+    // Populate repost data
+    const populatedRepost = await Post.findById(repost._id)
+      .populate("repostedBy", "username profilePicture")
+      .populate({
+        path: "originalPost",
+        populate: {
+          path: "user",
+          select: "username profilePicture fullName",
+        },
+      });
+
+    res.status(201).json(populatedRepost);
   } catch (error) {
     next(error);
   }

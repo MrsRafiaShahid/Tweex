@@ -92,31 +92,35 @@ const Post = ({ post }) => {
       toast.error(error.message);
     },
   });
-  const { mutate: repost, isPending: isReposting } = useMutation({
-    mutationFn: async () => {
-      const res = await fetch(`/api/posts/repost/${post._id}`, {
-        method: "POST",
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Something went wrong");
-      }
-      return data;
-    },
-    onSuccess: (data) => {
+const { mutate: repost, isPending: isReposting } = useMutation({
+  mutationFn: async () => {
+    const res = await fetch(`/api/posts/repostPost/${post._id}`, {
+      method: "POST",
+      credentials: "include",
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || "Something went wrong");
+    }
+    return data;
+  },
+  onSuccess: (data) => {
+    if (data.unrepostId) {
+      // Handle unrepost
       queryClient.setQueryData(["posts"], (oldData) => {
-        return oldData.map((p) => {
-          if (p._id === post._id) {
-            return { ...p, reposts: data.reposts };
-          }
-          return p;
-        });
+        return oldData.filter(post => post._id !== data.unrepostId);
       });
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
+      toast.success(data.message);
+    } else {
+      // Handle new repost
+      queryClient.setQueryData(["posts"], (oldData) => [data, ...oldData]);
+      toast.success("Reposted successfully!");
+    }
+  },
+  onError: (error) => {
+    toast.error(error.message);
+  },
+});
   const { mutate: likeComment, isPending: isCommentLiking } = useMutation({
     mutationFn: async (commentId) => {
       const res = await fetch(
@@ -210,56 +214,53 @@ const Post = ({ post }) => {
       />
     );
   }
-  {
-    post.repostedBy && (
-      <div className="flex items-center gap-1 text-slate-500 text-sm mb-1">
-        <BiRepost className="w-4 h-4 text-green-500" />
-        <span>Reposted By</span>
-        <Link
-          to={`/profile/${post.repostedBy.username}`}
-          className="font-semibold text-green-300 hover:text-sky-400"
-        >
-          @{post.repostedBy.username}
-        </Link>
-      </div>
-    );
-  }
-  {
-    post.orignalPost && (
-      <div className="border border-gray-600 rounded-lg p-4 mb-4 mt-2">
-        <div className="flex items-center gap-2 mb-2">
-          <img
-            src={
-              post.orignalPost.user?.profilePicture || "/avatar-placeholder.png"
-            }
-            className="w-8 h-8 rounded-full"
-            alt="Original Post Owner"
-          />
-          <span className="font-bold">{post.orignalPost.user?.fullName}</span>
-          <span className="text-sm text-gray-500">
-            @{post.orignalPost.user?.username}
-          </span>
-        </div>
-        <p className="mt-2">{post.orignalPost?.caption}</p>
-        {post.orignalPost.image && (
-          <img
-            src={post.orignalPost?.image}
-            className="mt-2 w-full h-64 object-contain border border-gray-700 rounded-lg"
-            alt="Original Post Image"
-          />
-        )}
-        <span className="text-xs text-gray-500">
-          {formatPostDate(post.orignalPost?.createdAt)}
-        </span>
-      </div>
-    );
-  }
-  if (!postOwner) {
-    return <p className="text-center my-4">Post owner not found</p>;
-  }
   return (
     <>
-      <PostComponent
+      {post.repostedBy && (
+        <div className="flex items-center gap-1 text-slate-500 text-sm mb-1 border-2 border-slate-700">
+          <BiRepost className="w-4 h-4 text-green-500" />
+          <span>Reposted by</span>
+          <Link
+            to={`/profile/${post.repostedBy?.username}`}
+            className="font-semibold text-green-300 hover:text-sky-400"
+          >
+            @{post.repostedBy?.username}
+          </Link>
+        </div>
+      )}
+
+      {post.originalPost ? (
+        <div className="border border-gray-600 rounded-lg p-4 mb-4 mt-2">
+          <div className="flex items-center gap-2 mb-2">
+            <img
+              src={
+                post?.originalPost?.user?.profilePicture || 
+                "/avatar-placeholder.png"
+              }
+              className="w-8 h-8 rounded-full"
+              alt="Original Post Owner"
+            />
+            <div>
+              <span className="font-bold">{post.originalPost.user?.fullName}</span>
+              <span className="text-sm text-gray-500 ml-2">
+                @{post.originalPost.user?.username}
+              </span>
+            </div>
+          </div>
+          <p className="mt-2">{post.originalPost?.caption}</p>
+          {post.originalPost.image && (
+            <img
+              src={post.originalPost?.image}
+              className="mt-2 w-full h-64 object-contain border border-gray-700 rounded-lg"
+              alt="Original Post Image"
+            />
+          )}
+          <span className="text-xs text-gray-500">
+            {formatPostDate(post.originalPost?.createdAt)}
+          </span>
+        </div>
+      ) : (
+         <PostComponent
         post={post}
         postOwner={postOwner}
         formattedDate={formattedDate}
@@ -279,7 +280,9 @@ const Post = ({ post }) => {
         handleLikeComment={handleLikeComment}
         isCommentLiking={isCommentLiking}
       />
+      )}
     </>
   );
 };
+
 export default Post;

@@ -21,13 +21,12 @@ const Login = () => {
     mutationFn: async ({ username, password }) => {
       const res = await fetch('/api/auth/login', {
         method: "POST",
-        credentials: "include", // Include cookies in the request
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ username, password }),
       });
-      // Check content type before parsing
       const contentType = res.headers.get("content-type");
       if (!contentType || !contentType.includes("application/json")) {
         const text = await res.text();
@@ -44,6 +43,7 @@ const Login = () => {
       toast.success("Login successfully");
     },
   });
+  
   const handleSubmit = (e) => {
     e.preventDefault();
     loginMutation(formData);
@@ -54,14 +54,30 @@ const Login = () => {
   };
 
   return (
-    <div className="max-w-screen-xl mx-auto flex h-screen px-10 ">
-      <div className="flex-1 hidden lg:flex items-center  justify-center">
-        <XSvg className=" lg:w-2/3 fill-white" />
+    <div className="max-w-screen-xl mx-auto flex flex-col lg:flex-row h-screen px-4 sm:px-10">
+      {/* Single logo container that adapts to both mobile and desktop */}
+      <div className={`flex justify-center ${window.innerWidth >= 1024 ? 'lg:flex-1 lg:items-center' : 'py-6'}`}>
+<div
+          className={`${
+            window.innerWidth >= 1024 ? "w-2/3 max-w-md relative" : "w-45 h-32 relative"
+          }`}
+        >
+          <XSvg className="w-full h-full" />
+          <span className=" flex flex-col absolute top-28 md:top-35 ">
+            <span className="text-14 text-center font-serif font-bold text-violet-500">TWEEX</span>
+            <span className="text-xs font-mono text-blue-300">Say it. Like it. Tweex it</span>
+          </span>
+        </div>
       </div>
+      
+      {/* Form container */}
       <div className="flex-1 flex flex-col justify-center items-center">
-        <form className="flex gap-4 flex-col" onSubmit={handleSubmit}>
-          <XSvg className="w-24 lg:hidden fill-white border-2 boder-amber-500" />
-          <h1 className="text-4xl font-extrabold text-white">{"Let's"} go.</h1>
+        <form 
+          className="w-full max-w-md mx-auto flex flex-col gap-4"
+          onSubmit={handleSubmit}
+        >
+          <h1 className="text-4xl font-extrabold text-white text-center">{"Let's"} go.</h1>
+          
           <label className="input input-bordered rounded flex items-center gap-2">
             <MdOutlineMail />
             <input
@@ -71,6 +87,7 @@ const Login = () => {
               name="username"
               onChange={handleInputChange}
               value={formData.username}
+              required
             />
           </label>
 
@@ -78,22 +95,27 @@ const Login = () => {
             <MdLock />
             <input
               type="password"
-              // autoComplete="current-password"
               className="grow"
               placeholder="Password"
               name="password"
               onChange={handleInputChange}
               value={formData.password}
+              required
             />
           </label>
+          
           <button className="btn rounded-full btn-primary text-white">
             {isPending ? "Loading..." : "Login"}
           </button>
-          {isError && error && <p className="text-red-500">{error.message}</p>}
+          
+          {isError && error && (
+            <p className="text-red-500 text-center">{error.message}</p>
+          )}
         </form>
-        <div className="flex flex-col gap-2 mt-4">
-          <p className="text-white text-lg">{"Don't"} have an account?</p>
-          <Link to="/signup">
+        
+        <div className="w-full max-w-md mt-4">
+          <p className="text-white text-lg text-center">{"Don't"} have an account?</p>
+          <Link to="/signup" className="block mt-2">
             <button className="btn rounded-full btn-primary text-white btn-outline w-full">
               Sign up
             </button>
@@ -103,4 +125,5 @@ const Login = () => {
     </div>
   );
 };
+
 export default Login;

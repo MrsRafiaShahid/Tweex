@@ -67,6 +67,8 @@ const Sidebar = () => {
         <Link to="/" className="flex justify-center md:justify-start">
           <XSvg className="px-2 w-20 h-20 rounded-full fill-current text-gray-900 text-base-content hover:bg-base-200 fill-current" />
         </Link>
+            <span className="text-xs hidden md:flex font-serif font-bold text-violet-500">TWEEX</span>
+
         {/* Toggle Button - Visible on all screens */}
              {/* Theme toggle button */}
           <button 

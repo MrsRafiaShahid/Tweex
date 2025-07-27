@@ -47,7 +47,6 @@ const Profile = () => {
       }
     },
   });
-
   const { updateProfile, isUpdateProfile } = useUpdateProfile();
   const memberSinceDate = formatMemberSinceDate(user?.createdAt);
   const isMyProfile = authUser._id === user?._id;

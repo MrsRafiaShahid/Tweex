@@ -32,12 +32,10 @@ const postSchema = new mongoose.Schema(
     repostedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      default: null,
     },
     originalPost: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Post",
-      default: null,
     },
     comments: [
       {
