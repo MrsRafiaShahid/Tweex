@@ -65,7 +65,7 @@ const Login = () => {
           <XSvg className="w-full h-full" />
           <span className=" flex flex-col absolute top-28 md:top-35 ">
             <span className="text-14 text-center font-serif font-bold text-violet-500">TWEEX</span>
-            <span className="text-xs font-mono text-blue-300">Say it. Like it. Tweex it</span>
+            <span className="text-[10px] font-mono text-blue-300">Say it. Like it. Tweex it</span>
           </span>
         </div>
       </div>
