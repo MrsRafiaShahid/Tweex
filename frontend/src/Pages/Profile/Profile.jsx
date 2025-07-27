@@ -214,7 +214,7 @@ const Profile = () => {
               </div>
               <div className="flex w-full border-b border-gray-700 mt-4">
                 <div
-                  className="flex justify-center flex-1 p-3 hover:bg-secondary transition duration-300 relative cursor-pointer"
+                  className="flex justify-center flex-1 p-3 hover:bg-gray-200 dark:hover:bg-gray-800 transition duration-300 relative cursor-pointer hover:text-white"
                   onClick={() => setFeedType("posts")}
                 >
                   Posts
@@ -223,7 +223,7 @@ const Profile = () => {
                   )}
                 </div>
                 <div
-                  className="flex justify-center flex-1 p-3 text-slate-500 hover:bg-secondary transition duration-300 relative cursor-pointer"
+                  className="flex justify-center flex-1 p-3 text-slate-500 hover:bg-gray-200 dark:hover:bg-gray-800 transition duration-300 relative cursor-pointer hover:text-white"
                   onClick={() => setFeedType("likes")}
                 >
                   Likes

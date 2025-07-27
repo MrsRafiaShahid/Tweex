@@ -135,21 +135,28 @@ const Post = ({ post }) => {
     },
     onSuccess: (data) => {
       queryClient.setQueryData(["posts"], (oldData) => {
-        return oldData.map((p) => {
-          if (p._id === post._id) {
-            const updatedComments = p.comments.map((c) =>
-              c._id === data.updatedComment._id ? data.updatedComment : c
-            );
-            return { ...p, comments: updatedComments };
-          }
-          return p;
-        });
+      return oldData.map((p) => {
+        if (p._id === post._id) {
+          const updatedComments = p.comments.map((c) => {
+            if (c._id === data.updatedComment._id) {
+              // Preserve existing user data while updating likes
+              return {
+                ...c,
+                likes: data.updatedComment.likes
+              };
+            }
+            return c;
+          });
+          return { ...p, comments: updatedComments };
+        }
+        return p;
       });
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
+    });
+  },
+  onError: (error) => {
+    toast.error(error.message);
+  },
+});
   const isMyPost = authUser?._id === post?.user?._id;
   // Add at the top of your component
   if (authLoading) return <LoadingSpinner size="md" />;

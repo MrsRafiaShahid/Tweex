@@ -1,6 +1,30 @@
 const XSvg = (props) => (
-  <svg aria-hidden="true" viewBox="0 0 24 24" {...props}>
-    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-  </svg>
+ <svg width="300" height="250" viewBox="0 0 300 250" xmlns="http://www.w3.org/2000/svg" {...props}>
+  <defs>
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#93ede1" />
+      <stop offset="50%" stopColor="#a855f7" />
+      <stop offset="100%" stopColor="#2dd4bf" />
+    </linearGradient>
+  </defs>
+
+  {/* <!-- Hexa Maze Outline --> */}
+  <g fill="none" stroke="url(#logoGradient)" strokeWidth="6">
+    {/* <!-- Outer hexagon --> */}
+    <polygon points="150,30 230,80 230,170 150,220 70,170 70,80,50" />
+
+    {/* <!-- Maze lines --> */}
+    <line x1="150" y1="30" x2="150" y2="220" />
+    <line x1="70" y1="80" x2="230" y2="170" />
+    <line x1="70" y1="170" x2="230" y2="80" />
+    <line x1="50" y1="220" x2="50" y2="30" />
+  </g>
+
+  {/* <!-- Text --> */}
+  {/* <text x="150" y="240" fontFamily="Poppins, sans-serif" fontSize="32" fill="#ffffff" textAnchor="middle" letterSpacing="2">
+    Tweex
+  </text> */}
+</svg>
+
 );
 export default XSvg;

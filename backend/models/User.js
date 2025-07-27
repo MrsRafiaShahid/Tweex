@@ -14,10 +14,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
-      trim: true, 
+      trim: true,
       lowercase: true,
     },
-    password: { 
+    password: {
       type: String,
       required: true,
       minlength: 8,
@@ -52,32 +52,36 @@ const userSchema = new mongoose.Schema(
         ref: "Post",
       },
     ],
+    stories: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Story",
+      },
+    ],
     followers: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-        default:[],
+        default: [],
       },
     ],
     following: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-        default:[],
+        default: [],
       },
     ],
-    likedPosts:[
+    likedPosts: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Post",
         default: [],
       },
-    ]
+    ],
   },
   { timestamps: true }
 );
-
-
 
 const User = mongoose.model("User", userSchema);
 

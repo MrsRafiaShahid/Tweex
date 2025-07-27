@@ -175,7 +175,8 @@ export const likeUnlikeComment = async (req, res, next) => {
   try {
     const { postId, commentId } = req.params;
     const userId = req.user._id;
-    const post = await Post.findById(postId);
+    const post = await Post.findById(postId)
+      .populate("comments.user", "username fullName profilePicture"); // Add population
     if (!post) throw new CustomError("Post not found", 404);
     const comment = post.comments.id(commentId);
     if (!comment) throw new CustomError("Comment not found", 404);
@@ -197,16 +198,16 @@ export const likeUnlikeComment = async (req, res, next) => {
       
     }
     await post.save();
-    const updatedComment ={
-      _id: comment._id,
-      user: comment.user,
-      comment: comment.comment,
-      likes: comment.likes,
-      createdAt: comment.createdAt,
-    };
-    res.status(200).json({
+     const updatedComment = post.comments.id(commentId);
+   res.status(200).json({
       message: userLike ? "Comment unliked successfully" : "Comment liked successfully",
-      updatedComment,
+      updatedComment: {
+        _id: updatedComment._id,
+        user: updatedComment.user, // Now includes user info
+        comment: updatedComment.comment,
+        likes: updatedComment.likes,
+        createdAt: updatedComment.createdAt,
+      },
     });
   } catch (error) {
     console.error("Error in likeUnlikeComment:", error);

@@ -3,8 +3,9 @@
     themes: all;
   }
   @plugin "daisyui/theme" {
-    name: "black";
+    name: "dark";
     default: true;
-    --color-primary: rgb(29, 155, 240);
-    --color-secondary:"rgb(24, 24, 24)";
+    /* --color-primary: rgb(29, 155, 240); */
+    --color-secondary:"rgba(2, 6, 26,0.5)";
   }
+ 
