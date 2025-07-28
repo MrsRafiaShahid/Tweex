@@ -197,18 +197,20 @@ const { mutate: repost, isPending: isReposting } = useMutation({
     if (isReposting) return;
     repost();
   };
+    const isRepost = !!post.originalPost;
+  const reposter = post.user;
 
   return (
     <>
-      {post?.repostedBy && (
+    {isRepost && (
         <div className="flex items-center gap-1 text-slate-500 text-sm mb-1">
           <BiRepost className="w-4 h-4 text-green-500" />
           <span>Reposted by</span>
           <Link
-            to={`/profile/${post.repostedBy.username}`}
+            to={`/profile/${reposter?.username}`}
             className="font-semibold text-green-300 hover:text-sky-400"
           >
-            @{post.repostedBy?.username}
+            @{reposter?.username}
           </Link>
         </div>
       )}
