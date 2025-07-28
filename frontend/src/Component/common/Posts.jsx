@@ -34,15 +34,23 @@ const Posts = ({ feedType, username, userId }) => {
           credentials: "include", // Include cookies in the request
         });
         const data = await res.json();
-		 
 
         if (!res.ok) {
           throw new Error(data.error || "Something went wrong");
         }
+        const postsArray = Array.isArray(data) ? data : data.posts || [];
 
-      if (Array.isArray(data)) return data;
-      if (data && Array.isArray(data.posts)) return data.posts;
-      return [];
+        return postsArray.map((post) => {
+          // For reposts, ensure we have user data
+          if (post.originalPost) {
+            return {
+              ...post,
+              // Preserve the reposter's info
+              user: post.user || post.originalPost?.user,
+            };
+          }
+          return post;
+        });
       } catch (error) {
         throw new Error(error);
       }
@@ -68,7 +76,7 @@ const Posts = ({ feedType, username, userId }) => {
       {!isLoading && !isRefetching && posts && (
         <div>
           {posts.map((post) => (
-            <Post key={post._id} post={post} />
+            <Post key={post?._id} post={post} />
           ))}
         </div>
       )}

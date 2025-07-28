@@ -104,19 +104,26 @@ const { mutate: repost, isPending: isReposting } = useMutation({
     }
     return data;
   },
-  onSuccess: (data) => {
-    if (data.unrepostId) {
-      // Handle unrepost
-      queryClient.setQueryData(["posts"], (oldData) => {
-        return oldData.filter(post => post._id !== data.unrepostId);
-      });
-      toast.success(data.message);
-    } else {
-      // Handle new repost
-      queryClient.setQueryData(["posts"], (oldData) => [data, ...oldData]);
-      toast.success("Reposted successfully!");
+  onSuccess: (repostData) => {
+  queryClient.setQueryData(["posts"], (oldData) => {
+    // If it's a new repost
+    if (!repostData.unrepostId) {
+      return [repostData, ...oldData.map(post => {
+        // Update the original post's reposts count
+        if (post._id === repostData.originalPost?._id) {
+          return {
+            ...post,
+            reposts: [...post.reposts, authUser._id]
+          };
+        }
+        return post;
+      })];
     }
-  },
+    // If it's an unrepost
+    return oldData.filter(post => post._id !== repostData.unrepostId);
+  });
+  toast.success(repostData.message || "Reposted successfully!");
+},
   onError: (error) => {
     toast.error(error.message);
   },
@@ -190,38 +197,15 @@ const { mutate: repost, isPending: isReposting } = useMutation({
     if (isReposting) return;
     repost();
   };
-  if (post.repostedBy && post.repostedBy._id === authUser?._id) {
-    return (
-      <PostComponent
-        post={post}
-        postOwner={postOwner}
-        formattedDate={formattedDate}
-        isMyPost={isMyPost}
-        isDeleting={isDeleting}
-        isLiking={isLiking}
-        isCommenting={isCommenting}
-        isReposting={isReposting}
-        handleDeletePost={handleDeletePost}
-        handlePostComment={handlePostComment}
-        handleLikePost={handleLikePost}
-        handleRepost={handleRepost}
-        comment={comment}
-        setComment={setComment}
-        authUser={authUser}
-        formatPostDate={formatPostDate}
-        handleLikeComment={handleLikeComment}
-        isCommentLiking={isCommentLiking}
-      />
-    );
-  }
+
   return (
     <>
-      {post.repostedBy && (
-        <div className="flex items-center gap-1 text-slate-500 text-sm mb-1 border-2 border-slate-700">
+      {post?.repostedBy && (
+        <div className="flex items-center gap-1 text-slate-500 text-sm mb-1">
           <BiRepost className="w-4 h-4 text-green-500" />
           <span>Reposted by</span>
           <Link
-            to={`/profile/${post.repostedBy?.username}`}
+            to={`/profile/${post.repostedBy.username}`}
             className="font-semibold text-green-300 hover:text-sky-400"
           >
             @{post.repostedBy?.username}
@@ -229,37 +213,69 @@ const { mutate: repost, isPending: isReposting } = useMutation({
         </div>
       )}
 
-      {post.originalPost ? (
-        <div className="border border-gray-600 rounded-lg p-4 mb-4 mt-2">
-          <div className="flex items-center gap-2 mb-2">
-            <img
-              src={
-                post?.originalPost?.user?.profilePicture || 
-                "/avatar-placeholder.png"
-              }
-              className="w-8 h-8 rounded-full"
-              alt="Original Post Owner"
-            />
-            <div>
-              <span className="font-bold">{post.originalPost.user?.fullName}</span>
-              <span className="text-sm text-gray-500 ml-2">
-                @{post.originalPost.user?.username}
-              </span>
-            </div>
-          </div>
-          <p className="mt-2">{post.originalPost?.caption}</p>
-          {post.originalPost.image && (
-            <img
-              src={post.originalPost?.image}
-              className="mt-2 w-full h-64 object-contain border border-gray-700 rounded-lg"
-              alt="Original Post Image"
-            />
-          )}
-          <span className="text-xs text-gray-500">
-            {formatPostDate(post.originalPost?.createdAt)}
+{post?.originalPost ? (
+  <div className="border border-gray-600 rounded-lg p-0 md:p-4 mb-4 mt-2">
+    {/* Use post.user for reposter info, not originalPost.user */}
+    <div className="flex items-center gap-2 mb-2">
+      <img
+        src={post.user?.profilePicture || "/avatar-placeholder.png"}
+        className="w-8 h-8 rounded-full"
+        alt="Reposter"
+      />
+      <div>
+        <span className="font-bold">{post.user?.fullName}</span>
+        <span className="text-sm text-gray-500 ml-2">
+          @{post.user?.username}
+        </span>
+      </div>
+    </div>
+    
+    {/* Original post content */}
+    <div className="ml-10 border-l-2 pl-4 border-gray-700">
+      <div className="flex items-center gap-2">
+        <img
+          src={
+            post.originalPost.user?.profilePicture || 
+            "/avatar-placeholder.png"
+          }
+          className="w-6 h-6 rounded-full"
+          alt="Original Post Owner"
+        />
+        <div>
+          <span className="font-bold text-sm">
+            {post.originalPost.user?.fullName}
+          </span>
+          <span className="text-xs text-gray-500 ml-2">
+            @{post.originalPost.user?.username}
           </span>
         </div>
-      ) : (
+      </div>
+      <p className="mt-2 text-sm">{post.originalPost?.caption}</p>
+      {post?.originalPost.image && (
+        <img
+          src={post.originalPost?.image}
+          className="mt-2 max-w-full h-48 object-contain rounded-lg"
+          alt="Original Post Image"
+        />
+      )}
+      <span className="text-xs text-gray-500 block mt-1">
+        {formatPostDate(post.originalPost?.createdAt)}
+      </span>
+    </div>
+    
+    {/* Repost info */}
+    <div className="flex items-center gap-1 mt-2 text-xs text-gray-500">
+      <BiRepost className="text-green-500" />
+      <span>Reposted by</span>
+      <Link
+        to={`/profile/${post.user?.username}`}
+        className="font-semibold text-green-300 hover:text-sky-400"
+      >
+        @{post.user?.username}
+      </Link>
+    </div>
+  </div>
+) : (
          <PostComponent
         post={post}
         postOwner={postOwner}

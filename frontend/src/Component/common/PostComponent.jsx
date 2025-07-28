@@ -28,12 +28,14 @@ const PostComponent = ({
   formatPostDate,
   handleLikeComment,
   isCommentLiking,
+
+
 }) => {
   const isLiked = post.likes.includes(authUser?._id);
   const isReposted =
     post.reposts.includes(authUser?._id) ||
     post.repostedBy?._id === authUser?._id;
-
+// const postOwner = post.user || post.originalPost?.user;
   return (
     <div className="flex gap-2 items-start p-4 border-b border-base-300">
       <div className="avatar">

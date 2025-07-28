@@ -318,16 +318,16 @@ export const repostPost = async (req, res, next) => {
     });
     await notification.save();
 
-    // Populate repost data
-    const populatedRepost = await Post.findById(repost._id)
-      .populate("repostedBy", "username profilePicture")
-      .populate({
-        path: "originalPost",
-        populate: {
-          path: "user",
-          select: "username profilePicture fullName",
-        },
-      });
+const populatedRepost = await Post.findById(repost._id)
+  .populate("user", "username profilePicture fullName") 
+  .populate("repostedBy", "username profilePicture")
+  .populate({
+    path: "originalPost",
+    populate: [{
+      path: "user",
+      select: "username profilePicture fullName"
+    }]
+  });
 
     res.status(201).json(populatedRepost);
   } catch (error) {
@@ -397,10 +397,19 @@ export const getUserPost = async (req, res, next) => {
     const { username } = req.params;
     const user = await User.findOne({ username });
     if (!user) throw new CustomError("User not found", 404);
+    
     const posts = await Post.find({ user: user._id })
       .populate("user", "-password")
       .populate("comments.user", "-password")
+      .populate({
+        path: "originalPost",
+        populate: {
+          path: "user",
+          select: "username profilePicture fullName"
+        }
+      })
       .sort({ createdAt: -1 });
+      
     res.status(200).json(posts);
   } catch (error) {
     next(error);

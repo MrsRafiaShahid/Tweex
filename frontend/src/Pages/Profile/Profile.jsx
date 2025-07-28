@@ -234,7 +234,7 @@ const Profile = () => {
             </>
           )}
 
-          <Posts username={username} userID={user?._id} feedType={feedType} />
+          <Posts username={username} userId={user?._id} feedType={feedType} />
         </div>
       </div>
     </>
