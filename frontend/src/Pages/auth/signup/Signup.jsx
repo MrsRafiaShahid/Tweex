@@ -54,22 +54,14 @@ const SignUpPage = () => {
 
   return (
     <div className="max-w-screen-xl mx-auto flex flex-col lg:flex-row h-screen px-4 sm:px-10">
-      {/* Single logo container that adapts to both mobile and desktop */}
-      <div
-        className={`flex justify-center ${
-          window.innerWidth >= 1024 ? "lg:flex-1 lg:items-center" : "py-6"
-        }`}
-      >
-        <div
-          className={`${
-            window.innerWidth >= 1024 ? "w-2/3 max-w-md relative" : "w-45 h-32 relative"
-          }`}
-        >
+      {/* Logo container with pure CSS responsiveness */}
+      <div className="flex justify-center lg:justify-start lg:items-center py-6 lg:py-0 lg:flex-1">
+        <div className="relative w-32 h-32 lg:w-2/3 lg:max-w-md">
           <XSvg className="w-full h-full" />
-          <span className=" flex flex-col absolute top-28 left-4 md:top-35">
-            <span className="text-14 text-center font-serif font-bold text-violet-500">TWEEX</span>
-            <span className="text-[10px] font-mono text-blue-300">Say it. Like it. Tweex it</span>
-          </span>
+          <div className="absolute top-25 lg:top-35 left-0 right-0 mt-2 lg:mt-0 lg:transform lg:-translate-y-1/2 text-center">
+            <span className="text-14 font-serif font-bold text-violet-500">TWEEX</span>
+            <span className="text-[10px] font-mono text-blue-300 block">Say it. Like it. Tweex it</span>
+          </div>
         </div>
       </div>
 
