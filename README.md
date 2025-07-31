@@ -258,7 +258,7 @@ npm run dev
 ### 🧑‍💻 Author
 
 - Made with ❤️ by Rafia Shahid
-- Let’s connect on <a herf="https://www.linkelin.com/in/rafia-shahid-285b37374">Linkedlin </a>
+- Let’s connect on <a herf="https://www.linkelin.com/in/rafia-shahid-mern">Linkedlin </a>
 
 ## License
 
